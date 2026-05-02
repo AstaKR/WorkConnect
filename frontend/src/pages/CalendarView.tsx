@@ -19,8 +19,9 @@ export default function CalendarView() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Only show submitted reports on the calendar — drafts are hidden
   const reportMap = reports.reduce((acc: Record<string, any>, r: any) => {
-    acc[r.date] = r;
+    if (r.is_submitted) acc[r.date] = r;
     return acc;
   }, {});
 
@@ -35,11 +36,9 @@ export default function CalendarView() {
 
   const monthStats = days.reduce((acc, day) => {
     const key = format(day, 'yyyy-MM-dd');
-    const r = reportMap[key];
-    if (r?.is_submitted) acc.submitted++;
-    else if (r) acc.draft++;
+    if (reportMap[key]) acc.submitted++;
     return acc;
-  }, { submitted: 0, draft: 0 });
+  }, { submitted: 0 });
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-6">
@@ -57,17 +56,13 @@ export default function CalendarView() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="glass p-4 rounded-2xl text-center">
           <p className="text-2xl font-bold text-green-600">{monthStats.submitted}</p>
           <p className="text-sm text-gray-500 mt-1">Submitted</p>
         </div>
         <div className="glass p-4 rounded-2xl text-center">
-          <p className="text-2xl font-bold text-yellow-500">{monthStats.draft}</p>
-          <p className="text-sm text-gray-500 mt-1">Draft</p>
-        </div>
-        <div className="glass p-4 rounded-2xl text-center">
-          <p className="text-2xl font-bold text-gray-400">{days.length - monthStats.submitted - monthStats.draft}</p>
+          <p className="text-2xl font-bold text-gray-400">{days.length - monthStats.submitted}</p>
           <p className="text-sm text-gray-500 mt-1">No Report</p>
         </div>
       </div>
@@ -115,16 +110,12 @@ export default function CalendarView() {
                     {format(day, 'd')}
                   </div>
                   {report && (
-                    <div className={`h-1.5 rounded-full mx-1 ${
-                      report.is_submitted ? 'bg-green-400' : 'bg-yellow-400'
-                    }`} />
-                  )}
-                  {report && (
-                    <p className={`text-xs mt-1 px-1 truncate font-medium ${
-                      report.is_submitted ? 'text-green-600' : 'text-yellow-600'
-                    }`}>
-                      {report.is_submitted ? '✓ Submitted' : '• Draft'}
-                    </p>
+                    <>
+                      <div className="h-1.5 rounded-full mx-1 bg-green-400" />
+                      <p className="text-xs mt-1 px-1 truncate font-medium text-green-600">
+                        ✓ Submitted
+                      </p>
+                    </>
                   )}
                 </motion.div>
               );
@@ -135,7 +126,6 @@ export default function CalendarView() {
         {/* Legend */}
         <div className="px-6 py-3 border-t border-gray-100 flex items-center gap-6 text-xs text-gray-500">
           <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full bg-green-400 inline-block" /> Submitted</span>
-          <span className="flex items-center gap-1.5"><span className="w-3 h-1.5 rounded-full bg-yellow-400 inline-block" /> Draft</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-primary inline-block" /> Today</span>
         </div>
       </div>
@@ -150,8 +140,8 @@ export default function CalendarView() {
               <h3 className="font-bold text-gray-900">
                 {new Date(selected.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </h3>
-              <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${selected.is_submitted ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                {selected.is_submitted ? 'Submitted' : 'Draft'}
+              <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                ✓ Submitted
               </span>
             </div>
             <p className="text-sm text-gray-500 mb-3">{selected.place_of_work}</p>
