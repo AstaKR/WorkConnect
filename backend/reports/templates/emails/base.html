@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ subject }}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+        .header {
+            padding: 24px 32px;
+            border-bottom: 1px solid #f1f5f9;
+            text-align: center;
+        }
+        .header img {
+            max-height: 48px;
+            max-width: 200px;
+        }
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+            margin-top: 12px;
+        }
+        .content {
+            padding: 32px;
+            line-height: 1.6;
+        }
+        .greeting {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 16px;
+        }
+        .message-box {
+            background-color: #f8fafc;
+            border-left: 4px solid {{ accent_color|default:"#2563eb" }};
+            padding: 16px 20px;
+            border-radius: 4px 8px 8px 4px;
+            margin: 24px 0;
+        }
+        .button-container {
+            text-align: center;
+            margin: 32px 0 16px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: {{ primary_color|default:"#2563eb" }};
+            color: #ffffff !important;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .footer {
+            background-color: #f8fafc;
+            padding: 24px 32px;
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+            border-top: 1px solid #f1f5f9;
+        }
+        .footer p {
+            margin: 4px 0;
+        }
+        .divider {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 24px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            {% if company_logo %}
+                <img src="{{ company_logo }}" alt="{{ company_name }} Logo">
+            {% else %}
+                <h1 class="header-title">{{ company_name|default:"ER Plan System" }}</h1>
+            {% endif %}
+        </div>
+        
+        <div class="content">
+            <div class="greeting">Hi {{ recipient_name }},</div>
+            
+            {% block content %}
+            {% endblock %}
+            
+            {% if action_url and action_text %}
+            <div class="button-container">
+                <a href="{{ action_url }}" class="button">{{ action_text }}</a>
+            </div>
+            {% endif %}
+            
+            <p style="margin-top: 32px; font-size: 14px; color: #64748b;">
+                Thank you,<br>
+                The {{ company_name|default:"ER Plan" }} Team
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification from {{ company_name|default:"ER Plan" }}.</p>
+            <p>You received this email because of your notification preferences.</p>
+        </div>
+    </div>
+</body>
+</html>
