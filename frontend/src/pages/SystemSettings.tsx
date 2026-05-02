@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Building2, Wand2, Settings, Check, Loader2, Mail, Plus, Trash2,
+  Building2, Settings, Check, Loader2, Mail, Plus, Trash2,
   Cpu, Zap, BarChart2, TestTube, Upload, Server,
-  Globe, KeyRound, ToggleLeft, ChevronRight, Image,
+  Globe, KeyRound, ToggleLeft, Image,
 } from 'lucide-react';
 import axios from '../api/axios';
 import { useAuthStore } from '../store/useAuthStore';
@@ -296,42 +296,6 @@ export default function SystemSettings() {
               </Field>
             </SectionCard>
 
-            {/* Legacy AI (basic) */}
-            <SectionCard
-              icon={<Wand2 className="w-4.5 h-4.5 text-violet-500" />}
-              title="Legacy AI Settings"
-              desc="Quick provider switch for the built-in AI integration"
-            >
-              <Field label="Active AI Provider">
-                <div className="relative">
-                  <select
-                    value={settings.ai_provider}
-                    onChange={e => setSettings({ ...settings, ai_provider: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl py-2.5 pl-3 pr-8 text-sm bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary appearance-none"
-                  >
-                    <option value="gemini">Google Gemini</option>
-                    <option value="claude">Anthropic Claude</option>
-                    <option value="openai">OpenAI GPT-4</option>
-                    <option value="groq">Groq Llama</option>
-                  </select>
-                  <ChevronRight className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 rotate-90 pointer-events-none" />
-                </div>
-              </Field>
-              {settings.ai_provider === 'gemini' && (
-                <Field label="Gemini API Key" hint="Get your key from Google AI Studio. Required for AI features.">
-                  <Input
-                    icon={<KeyRound className="w-4 h-4" />}
-                    type="password"
-                    value={settings.gemini_api_key}
-                    onChange={e => setSettings({ ...settings, gemini_api_key: e.target.value })}
-                    placeholder="AIza…"
-                  />
-                </Field>
-              )}
-              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                💡 For full control over providers and features, use the <strong>AI Engine</strong> tab.
-              </p>
-            </SectionCard>
 
           </motion.div>
         )}
