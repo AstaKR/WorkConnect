@@ -8,7 +8,7 @@ import {
   Shield, Bell, Palette, User, Building2, Map, ShieldCheck,
   TrendingUp, Zap,
 } from 'lucide-react';
-import { APP_NAME, COMPANY_NAME } from '../constants';
+import { APP_NAME } from '../constants';
 
 // ── Nav structure with groups ─────────────────────────────────────────────────
 const NAV_GROUPS = [
@@ -79,6 +79,7 @@ function NavLink({
 // ── Sidebar content ───────────────────────────────────────────────────────────
 function SidebarContent({ onClose }: { onClose?: () => void }) {
   const { user, logout, branding } = useAuthStore();
+  const companyName = branding.name && branding.name !== APP_NAME ? branding.name : '';
   const location = useLocation();
   const navigate = useNavigate();
   const [settingsOpen, setSettingsOpen] = useState(
@@ -94,7 +95,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
   const roleMeta = ROLE_META[role] ?? ROLE_META.employee;
   const initials = user?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() ?? '?';
 
-  const settingsChildActive = SETTINGS_CHILDREN.some(child => location.pathname === child.to);
+  const settingsChildActive = SETTINGS_CHILDREN.some(s => location.pathname === s.to);
 
   return (
     <div className="flex flex-col h-full">
@@ -113,7 +114,9 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-white font-extrabold text-sm leading-tight tracking-tight">{APP_NAME}</p>
-            <p className="text-white/35 text-[9px] uppercase tracking-widest mt-0.5 truncate">{COMPANY_NAME}</p>
+            {companyName && (
+              <p className="text-white/35 text-[9px] uppercase tracking-widest mt-0.5 truncate">{companyName}</p>
+            )}
           </div>
         </div>
       </div>
