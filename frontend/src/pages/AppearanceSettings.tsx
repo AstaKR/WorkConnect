@@ -186,7 +186,18 @@ export default function AppearanceSettings() {
     } finally { setSaving(false); }
   };
 
-  const handleReset = () => apply(DEFAULT_PREFS);
+  const handleReset = async () => {
+    apply(DEFAULT_PREFS);
+    setSaving(true);
+    try {
+      await api.patch('/settings/appearance/', DEFAULT_PREFS);
+      if (user) setUser({ ...user, preferences: DEFAULT_PREFS });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      if (user) setUser({ ...user, preferences: DEFAULT_PREFS });
+    } finally { setSaving(false); }
+  };
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -201,7 +212,7 @@ export default function AppearanceSettings() {
 
       {/* ── Sticky Header ──────────────────────────────────────────────── */}
       <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3.5">
-        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <Palette className="w-5 h-5 text-primary" />
@@ -233,7 +244,7 @@ export default function AppearanceSettings() {
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
         {/* ── Live Preview ─────────────────────────────────────────────── */}
         <section>
