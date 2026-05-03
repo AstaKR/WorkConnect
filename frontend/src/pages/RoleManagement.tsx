@@ -59,16 +59,16 @@ function PermissionMatrix({
   };
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-1 overflow-x-auto">
       {modules.map(mod => {
         const active = permissions[mod.key] || [];
         const allOn = mod.perms.every(p => active.includes(p));
         const someOn = active.length > 0 && !allOn;
         return (
           <div key={mod.key}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${active.length > 0 ? 'bg-blue-50/70' : 'hover:bg-gray-50'}`}>
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors min-w-max ${active.length > 0 ? 'bg-blue-50/70' : 'hover:bg-gray-50'}`}>
             <span className="text-lg leading-none w-7 text-center flex-shrink-0">{mod.icon}</span>
-            <span className="w-40 text-sm font-medium text-gray-700 flex-shrink-0">{mod.label}</span>
+            <span className="w-28 sm:w-40 text-sm font-medium text-gray-700 flex-shrink-0">{mod.label}</span>
 
             {/* Module-level toggle */}
             <button
@@ -294,30 +294,30 @@ export default function RoleManagement() {
   const d = modal.data;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg flex-shrink-0">
               <Shield className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Role Management</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Role Management</h1>
           </div>
-          <p className="text-gray-500 ml-14">
+          <p className="text-gray-500 ml-13 sm:ml-14 text-sm">
             Define access levels and permissions for each role in your organization.
           </p>
         </div>
 
         {isCEO && (
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0">
             <button onClick={handleSeed} disabled={seeding}
-              className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 bg-white text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition-all">
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 border border-gray-200 bg-white text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 shadow-sm transition-all whitespace-nowrap">
               {seeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               Seed System Roles
             </button>
             <button onClick={openNew}
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all text-sm">
+              className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all text-sm whitespace-nowrap">
               <Plus className="w-4 h-4" /> New Role
             </button>
           </div>
