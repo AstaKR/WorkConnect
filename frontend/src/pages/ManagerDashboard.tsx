@@ -185,24 +185,42 @@ export default function ManagerDashboard() {
         {!loading && summary && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-bold text-gray-800">Today's Submission Rate</p>
-              <span className="text-sm font-bold text-primary">
-                {summary.team_size > 0 ? Math.round((submittedCount / summary.team_size) * 100) : 0}%
-              </span>
-            </div>
-            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${summary.team_size > 0 ? (submittedCount / summary.team_size) * 100 : 0}%` }}
-                transition={{ duration: 1, ease: 'easeOut' }}
-                className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
-              />
-            </div>
-            <div className="flex justify-between text-xs text-gray-400 mt-2">
-              <span>{submittedCount} submitted</span>
-              <span>{(summary.team_size ?? 0) - submittedCount} not yet submitted</span>
-            </div>
+            {(() => {
+              // How many distinct members submitted at least once (≤ team_size)
+              const submittedMembers = Math.min(
+                new Set(teamReports.filter(r => r.is_submitted).map((r: any) => r.user)).size,
+                summary.team_size ?? 0
+              );
+              const pct = summary.team_size > 0
+                ? Math.min(Math.round((submittedMembers / summary.team_size) * 100), 100)
+                : 0;
+              const notYet = Math.max((summary.team_size ?? 0) - submittedMembers, 0);
+              return (
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-bold text-gray-800">Team Submission Rate</p>
+                    <span className={`text-sm font-bold ${pct === 100 ? 'text-emerald-600' : 'text-primary'}`}>
+                      {pct}%
+                    </span>
+                  </div>
+                  <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 1, ease: 'easeOut' }}
+                      className={`h-full rounded-full ${pct === 100 ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : 'bg-gradient-to-r from-primary to-accent'}`}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-400 mt-2">
+                    <span>{submittedMembers} of {summary.team_size} members submitted</span>
+                    {notYet > 0
+                      ? <span className="text-amber-500">{notYet} not yet submitted</span>
+                      : <span className="text-emerald-500 font-medium">✓ All members submitted</span>
+                    }
+                  </div>
+                </>
+              );
+            })()}
           </motion.div>
         )}
 

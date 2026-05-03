@@ -8,7 +8,7 @@ import {
   LayoutDashboard, FileText, History, CalendarDays, Columns, Users,
   Settings, LogOut, ChevronDown, Menu, X, Home,
   Shield, Bell, Palette, User, Map, ShieldCheck,
-  TrendingUp, Zap, BarChart3, Building2, Briefcase, Check,
+  TrendingUp, Zap, BarChart3, Building2, Briefcase, Check, RotateCcw,
 } from 'lucide-react';
 import { APP_NAME } from '../constants';
 
@@ -422,22 +422,14 @@ function NavDropdownMenu({ group, items, alignRight, onClose }: {
       exit={{ opacity:0, y:-8, scale:0.97 }}
       transition={{ duration:0.15, ease:[0.16,1,0.3,1] }}
       className={`absolute top-full mt-2 bg-white rounded-2xl border border-gray-200/70 overflow-hidden z-[9999] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.20),0_4px_20px_-4px_rgba(0,0,0,0.10)] ${
-        useGrid ? 'w-[460px]' : 'w-[300px]'
+        useGrid ? 'w-[460px]' : 'w-[280px]'
       } ${alignRight ? 'right-0' : 'left-0'}`}
     >
-      {/* Header strip */}
-      <div className={`flex items-center gap-3 px-5 py-4 bg-gradient-to-r ${group.accent.from} to-white border-b border-gray-100`}>
-        <div className={`w-10 h-10 rounded-xl ${group.accent.bg} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-          <Icon className={`w-5 h-5 ${group.accent.text}`} />
-        </div>
-        <div>
-          <p className="text-[11px] font-black text-gray-700 uppercase tracking-[0.12em] leading-none">{group.group}</p>
-          <p className="text-[10px] text-gray-400 mt-1">{items.length} {items.length===1?'page':'pages'} available</p>
-        </div>
-      </div>
+      {/* Thin accent top bar — no redundant group name, button already shows it */}
+      <div className={`h-1 bg-gradient-to-r ${group.accent.from} ${group.accent.bg}`} />
 
       {/* Items */}
-      <div className={`p-3 ${useGrid ? 'grid grid-cols-2 gap-2' : 'space-y-1'}`}>
+      <div className={`p-2.5 ${useGrid ? 'grid grid-cols-2 gap-1.5' : 'space-y-0.5'}`}>
         {items.map(item => {
           const active = location.pathname === item.to;
           const IIcon = item.icon;
@@ -472,7 +464,7 @@ function NavDropdownMenu({ group, items, alignRight, onClose }: {
 }
 
 function TopNavLayout() {
-  const { user, logout, branding } = useAuthStore();
+  const { user, setUser, logout, branding } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [openGroup, setOpenGroup] = useState<string|null>(null);
@@ -641,8 +633,25 @@ function TopNavLayout() {
                       ))}
                     </div>
 
-                    {/* Sign out */}
-                    <div className="border-t border-gray-100 p-2">
+                    {/* Reset theme + Sign out */}
+                    <div className="border-t border-gray-100 p-2 space-y-0.5">
+                      <button onClick={async () => {
+                          applyTheme(OCEAN_BLUE);
+                          try {
+                            await api.patch('/settings/appearance/', { ...OCEAN_BLUE, theme:'ocean', layout_density:'comfortable' });
+                            if (user) setUser({ ...user, preferences: { ...user.preferences, ...OCEAN_BLUE, theme:'ocean' } });
+                          } catch { /* applied locally at least */ }
+                          setOpenGroup(null);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-600 hover:bg-blue-50 transition-colors">
+                        <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                          <RotateCcw className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-left">Reset to Ocean Blue</p>
+                          <p className="text-[10px] text-blue-400 text-left">Restore default theme</p>
+                        </div>
+                      </button>
                       <button onClick={() => { logout(); navigate('/login'); }}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-600 hover:bg-red-50 transition-colors">
                         <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
