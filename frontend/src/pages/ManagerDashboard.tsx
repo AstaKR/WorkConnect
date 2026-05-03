@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, FileCheck, Clock, CheckCircle2, Trash2,
   TrendingUp, AlertCircle, Eye, UserCheck, RefreshCw,
-  ChevronRight, FileText, Search
+  ChevronRight, FileText
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
@@ -54,7 +54,6 @@ export default function ManagerDashboard() {
   // Person-tab state
   const [selectedPerson, setSelectedPerson] = useState<string>('__all__');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [personSearch, setPersonSearch] = useState('');
 
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [approvingId, setApprovingId] = useState<number | null>(null);
@@ -92,12 +91,7 @@ export default function ManagerDashboard() {
     }));
   }, [teamReports]);
 
-  const filteredPersons = useMemo(() =>
-    persons.filter(p => p.name.toLowerCase().includes(personSearch.toLowerCase())),
-    [persons, personSearch]
-  );
-
-  // Reports to display in right panel
+  // Reports to display
   const activeReports = useMemo(() => {
     let base = selectedPerson === '__all__' ? teamReports : (persons.find(p => p.id === selectedPerson)?.reports ?? []);
     if (statusFilter === 'submitted') return base.filter(r => r.is_submitted);
@@ -216,12 +210,12 @@ export default function ManagerDashboard() {
           </motion.div>
         )}
 
-        {/* ── Team Reports — Person-Wise Layout ────────────────────────── */}
+        {/* ── Team Reports — Unified Tab Layout ────────────────────────── */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
           {/* Panel header */}
-          <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <UserCheck className="w-5 h-5 text-primary" />
               <h2 className="text-base font-bold text-gray-900">Team Reports</h2>
@@ -230,51 +224,99 @@ export default function ManagerDashboard() {
             <span className="text-xs text-gray-400 font-medium">{persons.length} team member{persons.length !== 1 ? 's' : ''}</span>
           </div>
 
-          {/* Mobile: horizontal scroll person pills */}
-          <div className="lg:hidden border-b border-gray-100 overflow-x-auto">
-            <div className="flex gap-2 p-3 min-w-max">
+          {/* ── Person tab pills (all screen sizes) ── */}
+          <div className="border-b border-gray-100 overflow-x-auto scrollbar-none">
+            <div className="flex gap-2 px-4 py-3 min-w-max">
+              {/* All tab */}
               <button
                 onClick={() => { setSelectedPerson('__all__'); setStatusFilter('all'); }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold border transition-all min-h-[36px] flex-shrink-0 ${
+                className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all flex-shrink-0 ${
                   selectedPerson === '__all__'
                     ? 'bg-primary text-white border-primary shadow-sm'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-primary/30 hover:bg-primary/5'
                 }`}
               >
-                <Users className="w-3.5 h-3.5" /> All
-                {pendingCount > 0 && selectedPerson !== '__all__' && (
-                  <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{pendingCount}</span>
+                <Users className="w-3.5 h-3.5" />
+                All
+                {pendingCount > 0 && (
+                  <span className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full text-[9px] sm:text-[10px] font-bold flex items-center justify-center ${
+                    selectedPerson === '__all__' ? 'bg-white/20 text-white' : 'bg-amber-500 text-white'
+                  }`}>{pendingCount}</span>
                 )}
               </button>
-              {filteredPersons.map(person => (
-                <button
-                  key={person.id}
-                  onClick={() => { setSelectedPerson(person.id); setStatusFilter('all'); }}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold border transition-all min-h-[36px] flex-shrink-0 ${
-                    selectedPerson === person.id
-                      ? 'bg-primary text-white border-primary shadow-sm'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <Avatar name={person.name} size="sm" />
-                  <span>{person.name.split(' ')[0]}</span>
-                  {person.pending > 0 && (
-                    <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{person.pending}</span>
-                  )}
-                </button>
-              ))}
+
+              {/* Person tabs */}
+              {persons.map(person => {
+                const isActive = selectedPerson === person.id;
+                return (
+                  <button
+                    key={person.id}
+                    onClick={() => { setSelectedPerson(person.id); setStatusFilter('all'); }}
+                    className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold border transition-all flex-shrink-0 ${
+                      isActive
+                        ? 'bg-primary text-white border-primary shadow-sm'
+                        : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-primary/30 hover:bg-primary/5'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                      isActive ? 'bg-white/25 text-white' : 'bg-gradient-to-br from-primary/80 to-accent/80 text-white'
+                    }`}>
+                      {person.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                    <span className="max-w-[80px] sm:max-w-[120px] truncate">{person.name}</span>
+                    {person.pending > 0 && (
+                      <span className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full text-[9px] sm:text-[10px] font-bold flex items-center justify-center flex-shrink-0 ${
+                        isActive ? 'bg-white/25 text-white' : 'bg-amber-500 text-white'
+                      }`}>{person.pending}</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Mobile: status filter + report list */}
-          <div className="lg:hidden">
-            <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50/40 overflow-x-auto scrollbar-none">
+          {/* ── Active person info strip ── */}
+          <div className="px-4 sm:px-6 py-3 bg-gray-50/60 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+            {/* Left: person info */}
+            <div className="flex items-center gap-2 min-w-0">
+              {activePerson ? (
+                <>
+                  <Avatar name={activePerson.name} size="sm" />
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 text-sm">{activePerson.name}</p>
+                    <div className="flex items-center gap-2 sm:gap-3 flex-wrap text-[11px]">
+                      <span className="text-gray-400">{activePerson.reports.length} total</span>
+                      <span className="text-green-600 font-medium flex items-center gap-0.5">
+                        <CheckCircle2 className="w-3 h-3" />{activePerson.submitted}
+                      </span>
+                      {activePerson.pending > 0 && (
+                        <span className="text-amber-600 font-medium flex items-center gap-0.5">
+                          <Clock className="w-3 h-3" />{activePerson.pending} pending
+                        </span>
+                      )}
+                      {activePerson.approved > 0 && (
+                        <span className="text-blue-600 font-medium">✓{activePerson.approved} approved</span>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-gray-400" />
+                  <p className="font-semibold text-gray-700 text-sm">All Team Members</p>
+                  <span className="text-xs text-gray-400">· {teamReports.length} reports</span>
+                </div>
+              )}
+            </div>
+
+            {/* Right: status filter pills */}
+            <div className="overflow-x-auto scrollbar-none flex-shrink-0">
               <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-200 p-1 min-w-max">
                 {STATUS_FILTERS.map(f => (
                   <button
                     key={f.key}
                     onClick={() => setStatusFilter(f.key)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all min-h-[32px] whitespace-nowrap flex-shrink-0 ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                       statusFilter === f.key
                         ? 'bg-gray-900 text-white shadow-sm'
                         : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
@@ -286,47 +328,102 @@ export default function ManagerDashboard() {
                 ))}
               </div>
             </div>
-            <div className="divide-y divide-gray-50">
-              {loading ? (
-                <div className="p-4 space-y-3 animate-pulse">
-                  {[1,2,3].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl" />)}
-                </div>
-              ) : activeReports.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-                  <FileText className="w-10 h-10 opacity-20 mb-2" />
-                  <p className="font-medium text-sm">No reports here</p>
-                  <p className="text-xs mt-1">Try a different filter or member</p>
-                </div>
-              ) : (
-                activeReports.map((report, i) => (
-                  <div key={report.id} className="flex items-center gap-3 px-4 py-3.5">
-                    {selectedPerson === '__all__' && <Avatar name={report.user_name} size="sm" />}
-                    <div className="flex-shrink-0 text-center bg-gray-50 border border-gray-100 rounded-xl px-2.5 py-1.5 min-w-[48px]">
-                      <p className="text-[9px] font-bold text-gray-400 uppercase">{new Date(report.date).toLocaleDateString('en-US', { month: 'short' })}</p>
-                      <p className="text-base font-extrabold text-gray-800 leading-none">{new Date(report.date).getDate()}</p>
+          </div>
+
+          {/* ── Report list (unified for all screens) ── */}
+          <div className="divide-y divide-gray-50">
+            {loading ? (
+              <div className="p-5 space-y-3 animate-pulse">
+                {[1,2,3,4].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl" />)}
+              </div>
+            ) : activeReports.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <FileText className="w-12 h-12 opacity-20 mb-3" />
+                <p className="font-medium">No reports here</p>
+                <p className="text-xs mt-1">Try a different filter or team member</p>
+              </div>
+            ) : (
+              <AnimatePresence>
+                {activeReports.map((report, i) => (
+                  <motion.div
+                    key={report.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-3.5 sm:py-4 hover:bg-gray-50/70 transition-colors group"
+                  >
+                    {/* Avatar — only when viewing All */}
+                    {selectedPerson === '__all__' && (
+                      <Avatar name={report.user_name} size="sm" />
+                    )}
+
+                    {/* Date pill */}
+                    <div className="flex-shrink-0 text-center bg-gray-50 border border-gray-100 rounded-xl px-2.5 sm:px-3 py-1.5 sm:py-2 min-w-[44px] sm:min-w-[52px]">
+                      <p className="text-[9px] sm:text-[10px] font-bold text-gray-400 uppercase">
+                        {new Date(report.date).toLocaleDateString('en-US', { month: 'short' })}
+                      </p>
+                      <p className="text-base sm:text-lg font-extrabold text-gray-800 leading-none">
+                        {new Date(report.date).getDate()}
+                      </p>
+                      <p className="text-[9px] sm:text-[10px] text-gray-400">
+                        {new Date(report.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                      </p>
                     </div>
+
+                    {/* Details */}
                     <div className="flex-1 min-w-0">
-                      {selectedPerson === '__all__' && <p className="font-semibold text-gray-900 text-sm truncate">{report.user_name}</p>}
-                      <p className="text-xs text-gray-500 truncate">{report.place_of_work || '—'}</p>
+                      {selectedPerson === '__all__' && (
+                        <p className="font-semibold text-gray-900 text-sm truncate">{report.user_name}</p>
+                      )}
+                      <p className="text-xs text-gray-500 truncate font-medium">{report.place_of_work || '—'}</p>
+                      {report.tasks?.length > 0 && (
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          {report.tasks.length} task{report.tasks.length !== 1 ? 's' : ''} · {report.tasks.filter((t: any) => t.status === 'Completed').length} completed
+                        </p>
+                      )}
                     </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                        report.approval ? 'bg-blue-50 text-blue-700 border-blue-100'
-                        : report.is_submitted ? 'bg-green-50 text-green-700 border-green-100'
+
+                    {/* Status badge */}
+                    <span className={`flex-shrink-0 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold border ${
+                      report.approval
+                        ? 'bg-blue-50 text-blue-700 border-blue-100'
+                        : report.is_submitted
+                        ? 'bg-green-50 text-green-700 border-green-100'
                         : 'bg-gray-50 text-gray-500 border-gray-200'
-                      }`}>
-                        {report.approval ? '✓ Approved' : report.is_submitted ? 'Submitted' : 'Draft'}
-                      </span>
+                    }`}>
+                      {report.approval ? '✓ Approved' : report.is_submitted ? 'Submitted' : 'Draft'}
+                    </span>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => navigate(`/manager/employee/${report.user}`)}
+                        className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">View</span>
+                      </button>
                       {report.is_submitted && !report.approval && (
                         <button
                           onClick={() => approve(report.id)}
                           disabled={approvingId === report.id}
-                          className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
+                          className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-semibold text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors disabled:opacity-50"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          {approvingId === report.id ? '…' : <><CheckCircle2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">Approve</span></>}
+                        </button>
+                      )}
+                      {isCEO && (
+                        <button
+                          onClick={() => deleteReport(report.id)}
+                          disabled={deletingId === report.id}
+                          className="p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
+                    <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 group-hover:text-gray-400 transition-colors hidden sm:block" />
                   </div>
                 ))
               )}
@@ -384,224 +481,25 @@ export default function ManagerDashboard() {
                 {loading ? (
                   <div className="p-4 space-y-2 animate-pulse">
                     {[1,2,3,4].map(i => <div key={i} className="h-14 bg-gray-100 rounded-xl" />)}
-                  </div>
-                ) : filteredPersons.length === 0 ? (
-                  <div className="p-6 text-center text-gray-400 text-xs">No members found</div>
-                ) : filteredPersons.map((person) => {
-                  const isActive = selectedPerson === person.id;
-                  return (
-                    <button
-                      key={person.id}
-                      onClick={() => { setSelectedPerson(person.id); setStatusFilter('all'); }}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all border-b border-gray-50 relative ${
-                        isActive
-                          ? 'bg-primary/5 border-r-2 border-r-primary'
-                          : 'hover:bg-gray-50'
-                      }`}
-                    >
-                      <Avatar name={person.name} size="sm" />
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-semibold truncate ${isActive ? 'text-primary' : 'text-gray-800'}`}>
-                          {person.name}
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] text-green-600 font-medium">{person.submitted}✓</span>
-                          {person.pending > 0 && (
-                            <span className="text-[10px] text-amber-600 font-medium">{person.pending} pending</span>
-                          )}
-                          {person.draft > 0 && (
-                            <span className="text-[10px] text-gray-400">{person.draft} draft</span>
-                          )}
-                        </div>
-                      </div>
-                      {person.pending > 0 && (
-                        <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                          {person.pending}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            ))}
+              </AnimatePresence>
+            )}
+          </div>
 
-            {/* ── RIGHT: Report feed ────────────────────────────────── */}
-            <div className="flex-1 flex flex-col min-w-0">
-
-              {/* Active person header */}
-              <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between gap-3 bg-gray-50/40 flex-wrap">
-                {activePerson ? (
-                  <div className="flex items-center gap-3">
-                    <Avatar name={activePerson.name} size="sm" />
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm">{activePerson.name}</p>
-                      <div className="flex items-center gap-3 mt-0.5 text-[11px]">
-                        <span className="text-gray-400">{activePerson.reports.length} total</span>
-                        <span className="flex items-center gap-0.5 text-green-600 font-medium">
-                          <CheckCircle2 className="w-3 h-3" />{activePerson.submitted} submitted
-                        </span>
-                        {activePerson.pending > 0 && (
-                          <span className="flex items-center gap-0.5 text-amber-600 font-medium">
-                            <Clock className="w-3 h-3" />{activePerson.pending} pending
-                          </span>
-                        )}
-                        {activePerson.approved > 0 && (
-                          <span className="flex items-center gap-0.5 text-blue-600 font-medium">
-                            ✓{activePerson.approved} approved
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <p className="font-bold text-gray-700 text-sm">All Team Members</p>
-                    <span className="text-xs text-gray-400">· {teamReports.length} reports</span>
-                  </div>
-                )}
-
-                {/* Status filter pills */}
-                <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-200 p-1 overflow-x-auto">
-                  {STATUS_FILTERS.map(f => (
-                    <button
-                      key={f.key}
-                      onClick={() => setStatusFilter(f.key)}
-                      className={`flex items-center gap-1.5 px-2 xl:px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex-shrink-0 ${
-                        statusFilter === f.key
-                          ? 'bg-gray-900 text-white shadow-sm'
-                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${f.dot} ${statusFilter === f.key ? 'bg-white/70' : ''}`} />
-                      <span className="hidden xl:inline">{f.label}</span>
-                      <span className="xl:hidden">{f.key === 'all' ? 'All' : f.key === 'submitted' ? 'Sub' : f.key === 'pending' ? 'Pend' : f.key === 'approved' ? 'Appr' : 'Draft'}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Report list */}
-              <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
-                {loading ? (
-                  <div className="p-6 space-y-3 animate-pulse">
-                    {[1,2,3,4].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl" />)}
-                  </div>
-                ) : activeReports.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                    <FileText className="w-12 h-12 opacity-20 mb-3" />
-                    <p className="font-medium">No reports here</p>
-                    <p className="text-xs mt-1">Try a different filter or team member</p>
-                  </div>
-                ) : (
-                  <AnimatePresence>
-                    {activeReports.map((report, i) => (
-                      <motion.div
-                        key={report.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ delay: i * 0.03 }}
-                        className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50/70 transition-colors group"
-                      >
-                        {/* Show avatar only when viewing "all" */}
-                        {selectedPerson === '__all__' && (
-                          <Avatar name={report.user_name} size="sm" />
-                        )}
-
-                        {/* Date pill */}
-                        <div className="flex-shrink-0 text-center bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 min-w-[56px]">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase">
-                            {new Date(report.date).toLocaleDateString('en-US', { month: 'short' })}
-                          </p>
-                          <p className="text-lg font-extrabold text-gray-800 leading-none">
-                            {new Date(report.date).getDate()}
-                          </p>
-                          <p className="text-[10px] text-gray-400">
-                            {new Date(report.date).toLocaleDateString('en-US', { weekday: 'short' })}
-                          </p>
-                        </div>
-
-                        {/* Details */}
-                        <div className="flex-1 min-w-0">
-                          {selectedPerson === '__all__' && (
-                            <p className="font-semibold text-gray-900 text-sm truncate">{report.user_name}</p>
-                          )}
-                          <p className="text-xs text-gray-500 truncate font-medium">
-                            {report.place_of_work || '—'}
-                          </p>
-                          {report.tasks?.length > 0 && (
-                            <p className="text-[11px] text-gray-400 mt-0.5">
-                              {report.tasks.length} task{report.tasks.length !== 1 ? 's' : ''}
-                              {' · '}
-                              {report.tasks.filter((t: any) => t.status === 'Completed').length} completed
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Status badge */}
-                        <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
-                          report.approval
-                            ? 'bg-blue-50 text-blue-700 border-blue-100'
-                            : report.is_submitted
-                            ? 'bg-green-50 text-green-700 border-green-100'
-                            : 'bg-gray-50 text-gray-500 border-gray-200'
-                        }`}>
-                          {report.approval ? '✓ Approved' : report.is_submitted ? 'Submitted' : 'Draft'}
-                        </span>
-
-                        {/* Actions — visible on hover */}
-                        <div className="flex items-center gap-1.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => navigate(`/manager/employee/${report.user}`)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> View
-                          </button>
-                          {report.is_submitted && !report.approval && (
-                            <button
-                              onClick={() => approve(report.id)}
-                              disabled={approvingId === report.id}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors disabled:opacity-50"
-                            >
-                              {approvingId === report.id ? '…' : <><CheckCircle2 className="w-3.5 h-3.5" /> Approve</>}
-                            </button>
-                          )}
-                          {isCEO && (
-                            <button
-                              onClick={() => deleteReport(report.id)}
-                              disabled={deletingId === report.id}
-                              className="p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-
-                        <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 group-hover:text-gray-400 transition-colors" />
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                )}
-              </div>
-
-              {/* Footer count */}
-              {!loading && activeReports.length > 0 && (
-                <div className="px-5 py-2.5 border-t border-gray-100 bg-gray-50/40 text-xs text-gray-400 flex items-center justify-between">
-                  <span>Showing <strong className="text-gray-600">{activeReports.length}</strong> report{activeReports.length !== 1 ? 's' : ''}</span>
-                  {activePerson && (
-                    <button
-                      onClick={() => navigate(`/manager/employee/${selectedPerson}`)}
-                      className="flex items-center gap-1 text-primary font-semibold hover:underline"
-                    >
-                      Full history <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
+          {/* Footer */}
+          {!loading && activeReports.length > 0 && (
+            <div className="px-4 sm:px-5 py-2.5 border-t border-gray-100 bg-gray-50/40 text-xs text-gray-400 flex items-center justify-between">
+              <span>Showing <strong className="text-gray-600">{activeReports.length}</strong> report{activeReports.length !== 1 ? 's' : ''}</span>
+              {activePerson && (
+                <button
+                  onClick={() => navigate(`/manager/employee/${selectedPerson}`)}
+                  className="flex items-center gap-1 text-primary font-semibold hover:underline"
+                >
+                  Full history <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               )}
             </div>
-
-          </div>{/* end desktop two-column */}
+          )}
         </motion.div>
       </div>
     </div>
