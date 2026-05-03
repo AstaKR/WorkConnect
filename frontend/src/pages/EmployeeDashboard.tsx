@@ -116,7 +116,7 @@ export default function EmployeeDashboard() {
     <div className="min-h-screen bg-slate-50/60">
 
       {/* ── Hero banner ─────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-8 pt-8 pb-28">
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-20 sm:pb-28">
         {/* decorative blobs */}
         <div className="absolute -top-16 -right-16 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-400/20 rounded-full blur-3xl" />
@@ -132,7 +132,7 @@ export default function EmployeeDashboard() {
                 <Zap className="w-3 h-3" /> {branding.name}
               </span>
             )}
-            <h1 className="text-3xl md:text-4xl font-extrabold text-white leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight">
               {greeting}, {firstName} 👋
             </h1>
             <p className="text-white/60 mt-1.5 text-sm">
@@ -155,7 +155,7 @@ export default function EmployeeDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 -mt-20 pb-10 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-14 sm:-mt-20 pb-10 space-y-4 sm:space-y-6">
 
         {/* ── KPI cards overlapping banner ─────────────────────────── */}
         {loading ? (

@@ -243,38 +243,38 @@ Jane Smith,jane@company.com,TempPass@123,manager,EMP002,Team Lead,L5,IT,98765432
   const d = modal.data;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-500 mt-1">{users.length} total members · {users.filter(u => u.is_active).length} active</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">User Management</h1>
+          <p className="text-gray-500 mt-1 text-sm">{users.length} total members · {users.filter(u => u.is_active).length} active</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {me?.role === 'ceo' && (
             <>
               <button onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 bg-white text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-50 transition-all shadow-sm">
-                <Download className="w-4 h-4" /> Export CSV
+                className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border border-gray-200 bg-white text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-50 transition-all shadow-sm">
+                <Download className="w-4 h-4" /> <span className="hidden sm:inline">Export CSV</span>
               </button>
               <button onClick={() => { setShowImport(true); setImportCsv(''); setImportResult(null); }}
-                className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 bg-white text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-50 transition-all shadow-sm">
-                <Upload className="w-4 h-4" /> Import CSV
+                className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border border-gray-200 bg-white text-gray-700 rounded-xl font-medium text-sm hover:bg-gray-50 transition-all shadow-sm">
+                <Upload className="w-4 h-4" /> <span className="hidden sm:inline">Import CSV</span>
               </button>
             </>
           )}
           <button onClick={openNew}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary to-accent text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all text-sm">
-            <Plus className="w-4 h-4" /> Add Member
+            className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-gradient-to-r from-primary to-accent text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all text-sm">
+            <Plus className="w-4 h-4" /> <span>Add Member</span>
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="flex flex-wrap gap-2 sm:gap-3">
+        <div className="relative flex-1 min-w-[160px]">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search by name, email, ID..."
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name, email..."
             className="pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl w-full text-sm focus:ring-2 focus:ring-primary bg-white shadow-sm" />
         </div>
         <select value={filterRole} onChange={e => setFilterRole(e.target.value)}
@@ -295,8 +295,68 @@ Jane Smith,jane@company.com,TempPass@123,manager,EMP002,Team Lead,L5,IT,98765432
         </select>
       </div>
 
-      {/* Table */}
-      <div className="glass rounded-2xl overflow-hidden">
+      {/* ── Mobile Card View ── */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="space-y-3 animate-pulse">{[1,2,3].map(i => <div key={i} className="h-28 bg-white rounded-2xl border border-gray-100" />)}</div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-gray-400 bg-white rounded-2xl border border-gray-100">
+            <Users className="w-10 h-10 mx-auto mb-2 opacity-20" /><p>No members found</p>
+          </div>
+        ) : filtered.map(u => (
+          <motion.div key={u.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+            className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-4 ${!u.is_active ? 'opacity-60' : ''}`}>
+            <div className="flex items-start gap-3">
+              {u.profile_pic_url
+                ? <img src={u.profile_pic_url} alt={u.full_name} className="w-11 h-11 rounded-xl object-cover border border-gray-100 shadow-sm flex-shrink-0" />
+                : <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold flex-shrink-0">{u.full_name.charAt(0).toUpperCase()}</div>
+              }
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-bold text-gray-900 truncate">{u.full_name}</p>
+                    <p className="text-xs text-gray-400 truncate">{u.email}</p>
+                  </div>
+                  <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-bold capitalize ${
+                    u.role === 'ceo' ? 'bg-purple-100 text-purple-700' :
+                    u.role === 'manager' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                  }`}>{u.role}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_COLORS[u.employment_status] || 'bg-gray-100 text-gray-600'}`}>
+                    {u.employment_status?.replace('_', ' ')}
+                  </span>
+                  {u.department && <span className="px-2 py-0.5 bg-gray-50 text-gray-500 rounded-full text-[11px] border border-gray-100">{u.department}</span>}
+                  {!u.is_active && <span className="px-2 py-0.5 bg-red-50 text-red-400 rounded-full text-[11px]">Deactivated</span>}
+                </div>
+              </div>
+            </div>
+            {u.id !== me?.id && (
+              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50">
+                <button onClick={() => openEdit(u)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors">
+                  <Edit2 className="w-3.5 h-3.5" /> Edit
+                </button>
+                <button onClick={() => toggleActive(u)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold rounded-xl transition-colors ${
+                    u.is_active ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-green-600 bg-green-50 hover:bg-green-100'
+                  }`}>
+                  {u.is_active ? <><UserX className="w-3.5 h-3.5" /> Deactivate</> : <><UserCheck className="w-3.5 h-3.5" /> Activate</>}
+                </button>
+                {me?.role === 'ceo' && (
+                  <button onClick={() => handleDelete(u)}
+                    className="flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ── Desktop Table View ── */}
+      <div className="hidden md:block glass rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-600">
             <thead className="bg-gray-50/70 text-gray-500 font-semibold border-b border-gray-100 text-xs uppercase tracking-wide">

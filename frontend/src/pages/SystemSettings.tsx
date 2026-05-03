@@ -186,8 +186,8 @@ export default function SystemSettings() {
   return (
     <div className="min-h-screen bg-gray-50/50">
       {/* ── Page header ──────────────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-100 px-8 py-5">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
+      <div className="bg-white border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <Settings className="w-5 h-5 text-primary" />
@@ -200,7 +200,7 @@ export default function SystemSettings() {
           <button
             onClick={handleSave}
             disabled={saving || activeTab === 'ai'}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-primary to-accent text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-gradient-to-r from-primary to-accent text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed flex-shrink-0"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : <Check className="w-4 h-4" />}
             {saving ? 'Saving…' : saved ? 'Saved!' : 'Save Changes'}
@@ -208,7 +208,7 @@ export default function SystemSettings() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-8 py-6 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
         {/* ── Saved banner ────────────────────────────────────────────── */}
         <AnimatePresence>
           {saved && (
@@ -222,7 +222,7 @@ export default function SystemSettings() {
         </AnimatePresence>
 
         {/* ── Tab bar ──────────────────────────────────────────────────── */}
-        <div className="flex gap-1 bg-white border border-gray-100 rounded-2xl p-1.5 shadow-sm w-fit">
+        <div className="flex gap-1 bg-white border border-gray-100 rounded-2xl p-1.5 shadow-sm w-full sm:w-fit overflow-x-auto">
           {TABS.map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.key;

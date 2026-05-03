@@ -186,7 +186,7 @@ export default function CEODashboard() {
     <div className="min-h-screen bg-gray-50/50">
 
       {/* ── Hero Banner ───────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-violet-950 to-indigo-900 px-6 pt-8 pb-24">
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-violet-950 to-indigo-900 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-20 sm:pb-24">
         {/* Decorative blobs */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-violet-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-20 w-72 h-72 bg-indigo-500/15 rounded-full blur-3xl translate-y-1/2" />
@@ -200,7 +200,7 @@ export default function CEODashboard() {
                   <Zap className="w-3 h-3" /> CEO Dashboard
                 </span>
               </div>
-              <h1 className="text-3xl md:text-4xl font-extrabold text-white leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white leading-tight">
                 {greeting}, {firstName} 👋
               </h1>
               <p className="text-white/50 mt-1.5 text-sm">

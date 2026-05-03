@@ -143,7 +143,7 @@ export default function ManagerDashboard() {
     <div className="min-h-screen bg-gray-50/40">
 
       {/* ── Hero banner ──────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-800 via-blue-900 to-indigo-900 px-8 pt-8 pb-24">
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-800 via-blue-900 to-indigo-900 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-20 sm:pb-24">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-20 -right-20 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl" />
           <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl" />
@@ -152,18 +152,18 @@ export default function ManagerDashboard() {
         <div className="relative max-w-7xl mx-auto flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="text-blue-300 text-sm font-semibold mb-1">{greeting}, {user?.full_name?.split(' ')[0]} 👋</p>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">Manager Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Manager Dashboard</h1>
             <p className="text-blue-200/70 mt-1 text-sm">{format(new Date(), 'EEEE, MMMM d, yyyy')} · Team overview</p>
           </div>
           <button onClick={() => fetchData(true)} disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-sm font-medium transition-colors">
+            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-sm font-medium transition-colors">
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 -mt-14 pb-10 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 sm:-mt-14 pb-10 space-y-4 sm:space-y-6">
 
         {/* ── KPI cards ────────────────────────────────────────────────── */}
         {loading ? (
@@ -182,7 +182,7 @@ export default function ManagerDashboard() {
                 className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 relative overflow-hidden">
                 <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-1/2 translate-x-1/2 bg-gradient-to-br ${card.gradient} opacity-10`} />
                 <div className={`w-11 h-11 rounded-xl ${card.bg} ${card.text} flex items-center justify-center mb-4`}>{card.icon}</div>
-                <p className="text-3xl font-extrabold text-gray-900">{card.value}</p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">{card.value}</p>
                 <p className="text-sm font-semibold text-gray-600 mt-0.5">{card.label}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{card.sub}</p>
               </motion.div>
@@ -230,8 +230,111 @@ export default function ManagerDashboard() {
             <span className="text-xs text-gray-400 font-medium">{persons.length} team member{persons.length !== 1 ? 's' : ''}</span>
           </div>
 
-          {/* Two-column layout: person list + report feed */}
-          <div className="flex min-h-[520px]">
+          {/* Mobile: horizontal scroll person pills */}
+          <div className="lg:hidden border-b border-gray-100 overflow-x-auto">
+            <div className="flex gap-2 p-3 min-w-max">
+              <button
+                onClick={() => { setSelectedPerson('__all__'); setStatusFilter('all'); }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold border transition-all min-h-[36px] flex-shrink-0 ${
+                  selectedPerson === '__all__'
+                    ? 'bg-primary text-white border-primary shadow-sm'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" /> All
+                {pendingCount > 0 && selectedPerson !== '__all__' && (
+                  <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{pendingCount}</span>
+                )}
+              </button>
+              {filteredPersons.map(person => (
+                <button
+                  key={person.id}
+                  onClick={() => { setSelectedPerson(person.id); setStatusFilter('all'); }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-full text-xs font-semibold border transition-all min-h-[36px] flex-shrink-0 ${
+                    selectedPerson === person.id
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <Avatar name={person.name} size="sm" />
+                  <span>{person.name.split(' ')[0]}</span>
+                  {person.pending > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[9px] font-bold flex items-center justify-center">{person.pending}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile: status filter + report list */}
+          <div className="lg:hidden">
+            <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50/40 overflow-x-auto">
+              <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-200 p-1 w-fit">
+                {STATUS_FILTERS.map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => setStatusFilter(f.key)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all min-h-[32px] ${
+                      statusFilter === f.key
+                        ? 'bg-gray-900 text-white shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${f.dot} ${statusFilter === f.key ? 'bg-white/70' : ''}`} />
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {loading ? (
+                <div className="p-4 space-y-3 animate-pulse">
+                  {[1,2,3].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl" />)}
+                </div>
+              ) : activeReports.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                  <FileText className="w-10 h-10 opacity-20 mb-2" />
+                  <p className="font-medium text-sm">No reports here</p>
+                  <p className="text-xs mt-1">Try a different filter or member</p>
+                </div>
+              ) : (
+                activeReports.map((report, i) => (
+                  <div key={report.id} className="flex items-center gap-3 px-4 py-3.5">
+                    {selectedPerson === '__all__' && <Avatar name={report.user_name} size="sm" />}
+                    <div className="flex-shrink-0 text-center bg-gray-50 border border-gray-100 rounded-xl px-2.5 py-1.5 min-w-[48px]">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase">{new Date(report.date).toLocaleDateString('en-US', { month: 'short' })}</p>
+                      <p className="text-base font-extrabold text-gray-800 leading-none">{new Date(report.date).getDate()}</p>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {selectedPerson === '__all__' && <p className="font-semibold text-gray-900 text-sm truncate">{report.user_name}</p>}
+                      <p className="text-xs text-gray-500 truncate">{report.place_of_work || '—'}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        report.approval ? 'bg-blue-50 text-blue-700 border-blue-100'
+                        : report.is_submitted ? 'bg-green-50 text-green-700 border-green-100'
+                        : 'bg-gray-50 text-gray-500 border-gray-200'
+                      }`}>
+                        {report.approval ? '✓ Approved' : report.is_submitted ? 'Submitted' : 'Draft'}
+                      </span>
+                      {report.is_submitted && !report.approval && (
+                        <button
+                          onClick={() => approve(report.id)}
+                          disabled={approvingId === report.id}
+                          className="p-1.5 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-colors min-h-[32px] min-w-[32px] flex items-center justify-center"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Desktop: Two-column layout: person list + report feed */}
+          <div className="hidden lg:flex min-h-[520px]">
 
             {/* ── LEFT: Person selector ─────────────────────────────── */}
             <div className="w-64 flex-shrink-0 border-r border-gray-100 flex flex-col">
@@ -359,19 +462,20 @@ export default function ManagerDashboard() {
                 )}
 
                 {/* Status filter pills */}
-                <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-200 p-1">
+                <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-200 p-1 overflow-x-auto">
                   {STATUS_FILTERS.map(f => (
                     <button
                       key={f.key}
                       onClick={() => setStatusFilter(f.key)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      className={`flex items-center gap-1.5 px-2 xl:px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex-shrink-0 ${
                         statusFilter === f.key
                           ? 'bg-gray-900 text-white shadow-sm'
                           : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       <span className={`w-1.5 h-1.5 rounded-full ${f.dot} ${statusFilter === f.key ? 'bg-white/70' : ''}`} />
-                      {f.label}
+                      <span className="hidden xl:inline">{f.label}</span>
+                      <span className="xl:hidden">{f.key === 'all' ? 'All' : f.key === 'submitted' ? 'Sub' : f.key === 'pending' ? 'Pend' : f.key === 'approved' ? 'Appr' : 'Draft'}</span>
                     </button>
                   ))}
                 </div>
@@ -497,7 +601,7 @@ export default function ManagerDashboard() {
               )}
             </div>
 
-          </div>
+          </div>{/* end desktop two-column */}
         </motion.div>
       </div>
     </div>

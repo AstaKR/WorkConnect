@@ -39,9 +39,9 @@ export default function Profile() {
   };
 
   return (
-    <div className="p-8 max-w-2xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Profile</h1>
         <p className="text-gray-500 mt-1">Manage your personal information.</p>
       </div>
 
@@ -81,7 +81,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
             <div className="relative">
