@@ -131,6 +131,17 @@ function LayoutMiniPreview({ mode, prefs, size = 'md' }: {
   );
 }
 
+// ── Fields the backend actually accepts (no layout_style / sidebar_position) ──
+const toApiPayload = (p: Prefs) => ({
+  theme:            p.theme,
+  primary_color:    p.primary_color,
+  accent_color:     p.accent_color,
+  sidebar_color:    p.sidebar_color,
+  background_color: p.background_color,
+  font_size:        p.font_size,
+  layout_density:   p.layout_density,
+});
+
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function AppearanceSettings() {
   const { user, setUser } = useAuthStore();
@@ -141,63 +152,60 @@ export default function AppearanceSettings() {
   const [colorsOpen, setColorsOpen] = useState(false);
 
   useEffect(() => {
+    // Use Zustand store as base (has layout_style, sidebar_position),
+    // then overlay with API colors (primary_color, accent_color, etc.)
     const storedPrefs = user?.preferences as Partial<Prefs> | undefined;
+    const base: Prefs = { ...DEFAULT_PREFS, ...storedPrefs };
+    setPrefs(base);
+    applyTheme(base);
+
     api.get('/settings/appearance/')
       .then(res => {
-        // Merge: stored has layout_style/position, API has colors
-        const merged: Prefs = { ...DEFAULT_PREFS, ...storedPrefs, ...res.data.data };
+        if (!res.data?.data) return;
+        // API only has color/font fields — keep layout_style etc from Zustand
+        const merged: Prefs = { ...base, ...res.data.data };
         setPrefs(merged);
         applyTheme(merged);
-      })
-      .catch(() => {
-        const merged: Prefs = { ...DEFAULT_PREFS, ...storedPrefs };
-        setPrefs(merged);
-        applyTheme(merged);
+        // Sync Zustand with API colors (so they match)
+        if (user) setUser({ ...user, preferences: merged });
       })
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const apply = (next: Prefs) => {
+  /** Apply locally + save to API + update Zustand store */
+  const savePrefs = async (next: Prefs, silent = false) => {
     setPrefs(next);
     applyTheme(next);
+    if (!silent) setSaving(true);
+    try {
+      await api.patch('/settings/appearance/', toApiPayload(next));
+      if (user) setUser({ ...user, preferences: next });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      // Even if API fails, persist to Zustand so refresh doesn't lose it
+      if (user) setUser({ ...user, preferences: next });
+      if (!silent) {
+        setSaved(true); // show saved for local persistence
+        setTimeout(() => setSaved(false), 2500);
+      }
+    } finally {
+      if (!silent) setSaving(false);
+    }
   };
 
+  const apply = (next: Prefs) => { setPrefs(next); applyTheme(next); };
+
+  /** Preset click → auto-save immediately, no "Save" button needed */
   const applyPreset = (t: typeof THEMES[number]) => {
-    apply({ ...prefs, theme: t.id, primary_color: t.primary, accent_color: t.accent, sidebar_color: t.sidebar, background_color: t.bg });
+    const next: Prefs = { ...prefs, theme: t.id, primary_color: t.primary, accent_color: t.accent, sidebar_color: t.sidebar, background_color: t.bg };
+    savePrefs(next);
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const res = await api.patch('/settings/appearance/', prefs);
-      // Preserve our extra fields (layout_style, etc.) even if API doesn't return them
-      const merged: Prefs = { ...prefs, ...res.data.data };
-      applyTheme(merged);
-      setPrefs(merged);
-      if (user) setUser({ ...user, preferences: merged });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch {
-      // Still save to local store even if API fails
-      if (user) setUser({ ...user, preferences: prefs });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } finally { setSaving(false); }
-  };
+  const handleSave = () => savePrefs(prefs);
 
-  const handleReset = async () => {
-    apply(DEFAULT_PREFS);
-    setSaving(true);
-    try {
-      await api.patch('/settings/appearance/', DEFAULT_PREFS);
-      if (user) setUser({ ...user, preferences: DEFAULT_PREFS });
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch {
-      if (user) setUser({ ...user, preferences: DEFAULT_PREFS });
-    } finally { setSaving(false); }
-  };
+  const handleReset = () => savePrefs(DEFAULT_PREFS);
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">

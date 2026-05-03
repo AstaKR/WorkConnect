@@ -80,14 +80,14 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class UserPreferences(models.Model):
-    THEME_CHOICES = [('light', 'Light'), ('dark', 'Dark')]
     FONT_SIZE_CHOICES = [('sm', 'Small'), ('md', 'Medium'), ('lg', 'Large')]
     LAYOUT_CHOICES = [('compact', 'Compact'), ('comfortable', 'Comfortable')]
     DIGEST_CHOICES = [('none', 'Off'), ('daily', 'Daily'), ('weekly', 'Weekly')]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preferences')
 
-    theme = models.CharField(max_length=10, choices=THEME_CHOICES, default='light')
+    # Free-form theme name (ocean, forest, midnight, etc.) — no choices restriction
+    theme = models.CharField(max_length=30, default='ocean', blank=True)
     primary_color = models.CharField(max_length=7, default='#2563EB')
     accent_color = models.CharField(max_length=7, default='#7C3AED')
     sidebar_color = models.CharField(max_length=7, default='#1E293B')

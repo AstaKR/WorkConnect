@@ -781,24 +781,15 @@ export default function Layout() {
   const sidebarPosition = user?.preferences?.sidebar_position ?? 'left';
 
   useEffect(() => {
-    // 1. Apply stored prefs immediately (no flash)
+    // Zustand (localStorage) is the source of truth for theme on mount.
+    // AppearanceSettings keeps Zustand + API in sync whenever the user saves.
+    // We do NOT fetch from the API here — that was overwriting Zustand with
+    // the old stale API value (pink) every refresh, ignoring what the user saved.
     if (user?.preferences?.primary_color) {
       applyTheme(user.preferences);
     } else {
       applyTheme(OCEAN_BLUE);
     }
-
-    // 2. Fetch fresh from API — API is the source of truth
-    api.get('/settings/appearance/').then(res => {
-      const fresh = res.data?.data;
-      if (!fresh) return;
-      applyTheme(fresh);
-      if (user) {
-        setUser({ ...user, preferences: { ...user.preferences, ...fresh } });
-      }
-    }).catch(() => {
-      // Silently fall back to stored/default already applied above
-    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
