@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  /* Ocean Blue (default) */
   --color-primary: #2563EB;
   --color-accent: #7C3AED;
   --color-sidebar: #1E293B;
