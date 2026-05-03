@@ -2,8 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users, FileCheck, Clock, CheckCircle2, Trash2,
-  TrendingUp, AlertCircle, Eye, UserCheck, RefreshCw,
-  ChevronRight, FileText
+  TrendingUp, Eye, UserCheck, RefreshCw,
+  ChevronRight, FileText,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
@@ -51,10 +51,8 @@ export default function ManagerDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Person-tab state
   const [selectedPerson, setSelectedPerson] = useState<string>('__all__');
   const [statusFilter, setStatusFilter] = useState('all');
-
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [approvingId, setApprovingId] = useState<number | null>(null);
 
@@ -75,7 +73,6 @@ export default function ManagerDashboard() {
   useEffect(() => { fetchData(); }, []);
 
   // ── Derived data ────────────────────────────────────────────────────────────
-  // Group reports by person
   const persons = useMemo(() => {
     const map: Record<string, { name: string; reports: any[] }> = {};
     teamReports.forEach(r => {
@@ -84,16 +81,17 @@ export default function ManagerDashboard() {
     });
     return Object.entries(map).map(([id, data]) => ({
       id, ...data,
-      submitted:  data.reports.filter(r => r.is_submitted).length,
-      pending:    data.reports.filter(r => r.is_submitted && !r.approval).length,
-      approved:   data.reports.filter(r => r.approval).length,
-      draft:      data.reports.filter(r => !r.is_submitted).length,
+      submitted: data.reports.filter(r => r.is_submitted).length,
+      pending:   data.reports.filter(r => r.is_submitted && !r.approval).length,
+      approved:  data.reports.filter(r => r.approval).length,
+      draft:     data.reports.filter(r => !r.is_submitted).length,
     }));
   }, [teamReports]);
 
-  // Reports to display
   const activeReports = useMemo(() => {
-    let base = selectedPerson === '__all__' ? teamReports : (persons.find(p => p.id === selectedPerson)?.reports ?? []);
+    const base = selectedPerson === '__all__'
+      ? teamReports
+      : (persons.find(p => p.id === selectedPerson)?.reports ?? []);
     if (statusFilter === 'submitted') return base.filter(r => r.is_submitted);
     if (statusFilter === 'pending')   return base.filter(r => r.is_submitted && !r.approval);
     if (statusFilter === 'approved')  return base.filter(r => r.approval);
@@ -101,13 +99,12 @@ export default function ManagerDashboard() {
     return base;
   }, [selectedPerson, statusFilter, teamReports, persons]);
 
-  // Active person info
   const activePerson = useMemo(() =>
     selectedPerson === '__all__' ? null : persons.find(p => p.id === selectedPerson),
     [selectedPerson, persons]
   );
 
-  const pendingCount  = teamReports.filter(r => r.is_submitted && !r.approval).length;
+  const pendingCount   = teamReports.filter(r => r.is_submitted && !r.approval).length;
   const submittedCount = teamReports.filter(r => r.is_submitted).length;
   const approvedCount  = teamReports.filter(r => r.approval).length;
 
@@ -150,7 +147,7 @@ export default function ManagerDashboard() {
             <p className="text-blue-200/70 mt-1 text-sm">{format(new Date(), 'EEEE, MMMM d, yyyy')} · Team overview</p>
           </div>
           <button onClick={() => fetchData(true)} disabled={refreshing}
-            className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-sm font-medium transition-colors">
+            className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-sm font-medium transition-colors">
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
           </button>
@@ -167,41 +164,40 @@ export default function ManagerDashboard() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: <Users className="w-6 h-6" />, label: 'Team Size',       value: summary?.team_size ?? 0, sub: 'active members',     gradient: 'from-blue-500 to-indigo-600',   bg: 'bg-blue-50',    text: 'text-blue-600' },
-              { icon: <FileCheck className="w-6 h-6" />, label: 'Submitted',   value: submittedCount, sub: `of ${summary?.team_size ?? 0} expected`, gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-600' },
-              { icon: <Clock className="w-6 h-6" />, label: 'Pending Approval',value: pendingCount,   sub: pendingCount > 0 ? 'needs your action' : 'all clear!', gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50', text: 'text-amber-600' },
-              { icon: <CheckCircle2 className="w-6 h-6" />, label: 'Approved', value: approvedCount,  sub: 'reports approved',             gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-50',  text: 'text-violet-600' },
+              { icon: <Users className="w-6 h-6" />,       label: 'Team Size',        value: summary?.team_size ?? 0, sub: 'active members',                                gradient: 'from-blue-500 to-indigo-600',   bg: 'bg-blue-50',    text: 'text-blue-600' },
+              { icon: <FileCheck className="w-6 h-6" />,   label: 'Submitted',        value: submittedCount, sub: `of ${summary?.team_size ?? 0} expected`,                 gradient: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-600' },
+              { icon: <Clock className="w-6 h-6" />,       label: 'Pending Approval', value: pendingCount,   sub: pendingCount > 0 ? 'needs your action' : 'all clear!',   gradient: 'from-amber-500 to-orange-500', bg: 'bg-amber-50',   text: 'text-amber-600' },
+              { icon: <CheckCircle2 className="w-6 h-6" />, label: 'Approved',        value: approvedCount,  sub: 'reports approved',                                       gradient: 'from-violet-500 to-purple-600', bg: 'bg-violet-50',  text: 'text-violet-600' },
             ].map((card, i) => (
               <motion.div key={card.label} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-                className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 relative overflow-hidden">
+                className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 sm:p-5 relative overflow-hidden">
                 <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -translate-y-1/2 translate-x-1/2 bg-gradient-to-br ${card.gradient} opacity-10`} />
-                <div className={`w-11 h-11 rounded-xl ${card.bg} ${card.text} flex items-center justify-center mb-4`}>{card.icon}</div>
+                <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl ${card.bg} ${card.text} flex items-center justify-center mb-3 sm:mb-4`}>{card.icon}</div>
                 <p className="text-2xl sm:text-3xl font-extrabold text-gray-900">{card.value}</p>
-                <p className="text-sm font-semibold text-gray-600 mt-0.5">{card.label}</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-600 mt-0.5">{card.label}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{card.sub}</p>
               </motion.div>
             ))}
           </div>
         )}
 
-        {/* ── Submission rate ───────────────────────────────────────────── */}
+        {/* ── Submission rate bar ───────────────────────────────────────── */}
         {!loading && summary && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
-                <p className="text-sm font-bold text-gray-800">Today's Submission Rate</p>
-              </div>
+              <p className="text-sm font-bold text-gray-800">Today's Submission Rate</p>
               <span className="text-sm font-bold text-primary">
                 {summary.team_size > 0 ? Math.round((submittedCount / summary.team_size) * 100) : 0}%
               </span>
             </div>
             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }}
+              <motion.div
+                initial={{ width: 0 }}
                 animate={{ width: `${summary.team_size > 0 ? (submittedCount / summary.team_size) * 100 : 0}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
-                className="h-full rounded-full bg-gradient-to-r from-primary to-accent" />
+                className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+              />
             </div>
             <div className="flex justify-between text-xs text-gray-400 mt-2">
               <span>{submittedCount} submitted</span>
@@ -211,9 +207,12 @@ export default function ManagerDashboard() {
         )}
 
         {/* ── Team Reports — Unified Tab Layout ────────────────────────── */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+        >
           {/* Panel header */}
           <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -221,12 +220,15 @@ export default function ManagerDashboard() {
               <h2 className="text-base font-bold text-gray-900">Team Reports</h2>
               <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full font-bold">{teamReports.length}</span>
             </div>
-            <span className="text-xs text-gray-400 font-medium">{persons.length} team member{persons.length !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-gray-400 font-medium">
+              {persons.length} team member{persons.length !== 1 ? 's' : ''}
+            </span>
           </div>
 
-          {/* ── Person tab pills (all screen sizes) ── */}
+          {/* Person tab pills */}
           <div className="border-b border-gray-100 overflow-x-auto scrollbar-none">
             <div className="flex gap-2 px-4 py-3 min-w-max">
+
               {/* All tab */}
               <button
                 onClick={() => { setSelectedPerson('__all__'); setStatusFilter('all'); }}
@@ -240,12 +242,12 @@ export default function ManagerDashboard() {
                 All
                 {pendingCount > 0 && (
                   <span className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full text-[9px] sm:text-[10px] font-bold flex items-center justify-center ${
-                    selectedPerson === '__all__' ? 'bg-white/20 text-white' : 'bg-amber-500 text-white'
+                    selectedPerson === '__all__' ? 'bg-white/25 text-white' : 'bg-amber-500 text-white'
                   }`}>{pendingCount}</span>
                 )}
               </button>
 
-              {/* Person tabs */}
+              {/* Per-person tabs */}
               {persons.map(person => {
                 const isActive = selectedPerson === person.id;
                 return (
@@ -275,9 +277,9 @@ export default function ManagerDashboard() {
             </div>
           </div>
 
-          {/* ── Active person info strip ── */}
+          {/* Info strip + status filter */}
           <div className="px-4 sm:px-6 py-3 bg-gray-50/60 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
-            {/* Left: person info */}
+            {/* Person info */}
             <div className="flex items-center gap-2 min-w-0">
               {activePerson ? (
                 <>
@@ -309,7 +311,7 @@ export default function ManagerDashboard() {
               )}
             </div>
 
-            {/* Right: status filter pills */}
+            {/* Status filter */}
             <div className="overflow-x-auto scrollbar-none flex-shrink-0">
               <div className="flex items-center gap-1 bg-white rounded-xl border border-gray-200 p-1 min-w-max">
                 {STATUS_FILTERS.map(f => (
@@ -330,7 +332,7 @@ export default function ManagerDashboard() {
             </div>
           </div>
 
-          {/* ── Report list (unified for all screens) ── */}
+          {/* Report list */}
           <div className="divide-y divide-gray-50">
             {loading ? (
               <div className="p-5 space-y-3 animate-pulse">
@@ -410,7 +412,10 @@ export default function ManagerDashboard() {
                           disabled={approvingId === report.id}
                           className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-semibold text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors disabled:opacity-50"
                         >
-                          {approvingId === report.id ? '…' : <><CheckCircle2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">Approve</span></>}
+                          {approvingId === report.id
+                            ? '…'
+                            : <><CheckCircle2 className="w-3.5 h-3.5" /><span className="hidden sm:inline">Approve</span></>
+                          }
                         </button>
                       )}
                       {isCEO && (
@@ -423,65 +428,10 @@ export default function ManagerDashboard() {
                         </button>
                       )}
                     </div>
+
                     <ChevronRight className="w-4 h-4 text-gray-300 flex-shrink-0 group-hover:text-gray-400 transition-colors hidden sm:block" />
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Desktop: Two-column layout: person list + report feed */}
-          <div className="hidden lg:flex min-h-[520px]">
-
-            {/* ── LEFT: Person selector ─────────────────────────────── */}
-            <div className="w-64 flex-shrink-0 border-r border-gray-100 flex flex-col">
-
-              {/* Search */}
-              <div className="p-3 border-b border-gray-100">
-                <div className="relative">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    value={personSearch}
-                    onChange={e => setPersonSearch(e.target.value)}
-                    placeholder="Search member..."
-                    className="w-full pl-8 pr-3 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary/40 outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Person list */}
-              <div className="flex-1 overflow-y-auto">
-
-                {/* "All Members" row */}
-                <button
-                  onClick={() => { setSelectedPerson('__all__'); setStatusFilter('all'); }}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-left transition-all border-b border-gray-50 relative ${
-                    selectedPerson === '__all__'
-                      ? 'bg-primary/5 border-r-2 border-r-primary'
-                      : 'hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center flex-shrink-0">
-                    <Users className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className={`text-sm font-bold truncate ${selectedPerson === '__all__' ? 'text-primary' : 'text-gray-700'}`}>
-                      All Members
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">{teamReports.length} reports</p>
-                  </div>
-                  {pendingCount > 0 && selectedPerson !== '__all__' && (
-                    <span className="w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                      {pendingCount}
-                    </span>
-                  )}
-                </button>
-
-                {/* Individual persons */}
-                {loading ? (
-                  <div className="p-4 space-y-2 animate-pulse">
-                    {[1,2,3,4].map(i => <div key={i} className="h-14 bg-gray-100 rounded-xl" />)}
-            ))}
+                  </motion.div>
+                ))}
               </AnimatePresence>
             )}
           </div>
@@ -501,6 +451,7 @@ export default function ManagerDashboard() {
             </div>
           )}
         </motion.div>
+
       </div>
     </div>
   );
