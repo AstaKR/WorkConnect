@@ -1,9 +1,15 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Loader2, Palette, Monitor, Type, LayoutGrid, Sparkles, RotateCcw, ChevronRight } from 'lucide-react';
+import {
+  Check, Loader2, Palette, Monitor, Type, LayoutGrid,
+  Sparkles, RotateCcw, ChevronDown,
+  PanelLeft, AlignLeft, AlignRight,
+} from 'lucide-react';
 import api from '../api/axios';
 import { useAuthStore } from '../store/useAuthStore';
+import { applyTheme } from '../utils/theme';
 
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface Prefs {
   theme: string;
   primary_color: string;
@@ -12,260 +18,529 @@ interface Prefs {
   background_color: string;
   font_size: string;
   layout_density: string;
+  layout_style: string;
+  sidebar_position: string;
 }
 
 const DEFAULT_PREFS: Prefs = {
-  theme: 'light',
+  theme: 'ocean',
   primary_color: '#2563EB',
   accent_color: '#7C3AED',
   sidebar_color: '#1E293B',
   background_color: '#F8FAFC',
   font_size: 'md',
   layout_density: 'comfortable',
+  layout_style: 'sidebar',
+  sidebar_position: 'left',
 };
 
-const PRESET_THEMES = [
-  { name: 'Ocean Blue',  primary: '#2563EB', accent: '#7C3AED', sidebar: '#1E293B', bg: '#F8FAFC' },
-  { name: 'Forest',      primary: '#059669', accent: '#0D9488', sidebar: '#134E2E', bg: '#F0FDF4' },
-  { name: 'Sunset',      primary: '#EA580C', accent: '#DB2777', sidebar: '#27101A', bg: '#FFF7ED' },
-  { name: 'Royal',       primary: '#7C3AED', accent: '#EC4899', sidebar: '#1E1040', bg: '#FAF5FF' },
-  { name: 'Steel',       primary: '#475569', accent: '#0EA5E9', sidebar: '#0F172A', bg: '#F1F5F9' },
-  { name: 'Rose Gold',   primary: '#BE185D', accent: '#F59E0B', sidebar: '#1C0B10', bg: '#FFF1F2' },
-];
+// ── 15 Preset Themes ─────────────────────────────────────────────────────────
+const THEMES = [
+  { id: 'ocean',    name: 'Ocean Blue',  primary: '#2563EB', accent: '#7C3AED', sidebar: '#1E293B', bg: '#F8FAFC' },
+  { id: 'forest',   name: 'Forest',      primary: '#059669', accent: '#0D9488', sidebar: '#134E2E', bg: '#F0FDF4' },
+  { id: 'sunset',   name: 'Sunset',      primary: '#EA580C', accent: '#DB2777', sidebar: '#27101A', bg: '#FFF7ED' },
+  { id: 'royal',    name: 'Royal',       primary: '#7C3AED', accent: '#EC4899', sidebar: '#1E1040', bg: '#FAF5FF' },
+  { id: 'steel',    name: 'Steel',       primary: '#475569', accent: '#0EA5E9', sidebar: '#0F172A', bg: '#F1F5F9' },
+  { id: 'rosegold', name: 'Rose Gold',   primary: '#BE185D', accent: '#F59E0B', sidebar: '#1C0B10', bg: '#FFF1F2' },
+  { id: 'midnight', name: 'Midnight',    primary: '#818CF8', accent: '#34D399', sidebar: '#080D1A', bg: '#111827' },
+  { id: 'aurora',   name: 'Aurora',      primary: '#06B6D4', accent: '#8B5CF6', sidebar: '#0C1624', bg: '#F0F9FF' },
+  { id: 'crimson',  name: 'Crimson',     primary: '#DC2626', accent: '#F97316', sidebar: '#1A0808', bg: '#FEF2F2' },
+  { id: 'earth',    name: 'Earth',       primary: '#92400E', accent: '#65A30D', sidebar: '#1C1208', bg: '#FFFBEB' },
+  { id: 'cobalt',   name: 'Cobalt',      primary: '#1D4ED8', accent: '#0891B2', sidebar: '#0A1628', bg: '#EFF6FF' },
+  { id: 'lavender', name: 'Lavender',    primary: '#9333EA', accent: '#EC4899', sidebar: '#1E0A2E', bg: '#F5F3FF' },
+  { id: 'emerald',  name: 'Emerald',     primary: '#10B981', accent: '#F59E0B', sidebar: '#052E16', bg: '#ECFDF5' },
+  { id: 'mono',     name: 'Monochrome',  primary: '#334155', accent: '#64748B', sidebar: '#0F172A', bg: '#F8FAFC' },
+  { id: 'neon',     name: 'Neon Dark',   primary: '#A855F7', accent: '#22D3EE', sidebar: '#080B14', bg: '#0D1117' },
+] as const;
 
-const applyPrefs = (prefs: Prefs) => {
-  document.documentElement.style.setProperty('--color-primary', prefs.primary_color);
-  document.documentElement.style.setProperty('--color-accent', prefs.accent_color);
-  document.documentElement.style.setProperty('--color-sidebar', prefs.sidebar_color);
-  document.documentElement.style.setProperty('--color-background', prefs.background_color);
-  document.documentElement.style.fontSize =
-    prefs.font_size === 'sm' ? '14px' : prefs.font_size === 'lg' ? '17px' : '16px';
-};
+// ── Layout Modes ──────────────────────────────────────────────────────────────
+const LAYOUT_MODES = [
+  { id: 'sidebar',  name: 'Full Sidebar',       desc: 'Classic sidebar navigation' },
+  { id: 'compact',  name: 'Compact Sidebar',    desc: 'Icon-only slim sidebar' },
+  { id: 'topnav',   name: 'Top Navigation',     desc: 'Horizontal nav bar on top' },
+] as const;
 
-const sectionVariants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.4, ease: 'easeOut' } }),
-};
+// ── Mini Layout Preview ───────────────────────────────────────────────────────
+function LayoutMiniPreview({ mode, prefs, size = 'md' }: {
+  mode: string; prefs: Prefs; size?: 'sm' | 'md';
+}) {
+  const h = size === 'sm' ? 'h-[52px]' : 'h-[80px]';
 
+  if (mode === 'topnav') {
+    return (
+      <div className={`w-full ${h} rounded-xl overflow-hidden flex flex-col border border-black/5`}
+        style={{ background: prefs.background_color }}>
+        {/* Top bar */}
+        <div className="flex items-center gap-1.5 px-2 h-5 flex-shrink-0"
+          style={{ background: prefs.sidebar_color }}>
+          <div className="w-3 h-2 rounded-sm" style={{ background: prefs.primary_color, opacity: 0.9 }} />
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-1.5 rounded-full flex-shrink-0"
+              style={{ background: `${prefs.primary_color}${i === 1 ? '70' : '35'}`, width: i === 1 ? 14 : 10 }} />
+          ))}
+          <div className="ml-auto w-4 h-3 rounded" style={{ background: `${prefs.accent_color}60` }} />
+        </div>
+        {/* Content */}
+        <div className="flex-1 p-2 flex flex-col gap-1.5">
+          <div className="flex gap-2">
+            <div className="h-2 rounded-full flex-1" style={{ background: `${prefs.primary_color}18` }} />
+            <div className="h-2 w-8 rounded" style={{ background: prefs.primary_color, opacity: 0.75 }} />
+          </div>
+          <div className="grid grid-cols-3 gap-1 flex-1">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="rounded-lg"
+                style={{ background: `${i % 2 === 0 ? prefs.accent_color : prefs.primary_color}18` }} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const sidebarW = mode === 'compact' ? 'w-5' : 'w-10';
+
+  return (
+    <div className={`w-full ${h} rounded-xl overflow-hidden flex border border-black/5`}
+      style={{ background: prefs.background_color }}>
+      {/* Sidebar */}
+      <div className={`${sidebarW} h-full flex flex-col items-center py-2 gap-1.5 flex-shrink-0`}
+        style={{ background: prefs.sidebar_color }}>
+        <div className="w-3 h-3 rounded-full" style={{ background: prefs.primary_color }} />
+        {[1, 2, 3].map(i => (
+          <div key={i} className={`rounded-full ${mode === 'compact' ? 'w-2.5 h-1.5' : 'w-4 h-1.5'}`}
+            style={{ background: `${prefs.primary_color}${i === 1 ? '70' : '35'}` }} />
+        ))}
+      </div>
+      {/* Content */}
+      <div className="flex-1 p-2 flex flex-col gap-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className="h-2 flex-1 rounded-full" style={{ background: `${prefs.primary_color}18` }} />
+          <div className="h-2 w-8 rounded" style={{ background: prefs.primary_color, opacity: 0.8 }} />
+        </div>
+        <div className="grid grid-cols-2 gap-1 flex-1">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="rounded-lg"
+              style={{ background: `${i % 2 === 0 ? prefs.accent_color : prefs.primary_color}18` }} />
+          ))}
+        </div>
+        {size !== 'sm' && (
+          <div className="h-2 w-3/4 rounded-full" style={{ background: `${prefs.accent_color}25` }} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function AppearanceSettings() {
   const { user, setUser } = useAuthStore();
   const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [colorsOpen, setColorsOpen] = useState(false);
 
   useEffect(() => {
+    const storedPrefs = user?.preferences as Partial<Prefs> | undefined;
     api.get('/settings/appearance/')
-      .then(res => { setPrefs(res.data.data); applyPrefs(res.data.data); })
-      .catch(console.error)
+      .then(res => {
+        // Merge: stored has layout_style/position, API has colors
+        const merged: Prefs = { ...DEFAULT_PREFS, ...storedPrefs, ...res.data.data };
+        setPrefs(merged);
+        applyTheme(merged);
+      })
+      .catch(() => {
+        const merged: Prefs = { ...DEFAULT_PREFS, ...storedPrefs };
+        setPrefs(merged);
+        applyTheme(merged);
+      })
       .finally(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const applyPreset = (p: typeof PRESET_THEMES[0]) => {
-    const next = { ...prefs, primary_color: p.primary, accent_color: p.accent, sidebar_color: p.sidebar, background_color: p.bg };
+  const apply = (next: Prefs) => {
     setPrefs(next);
-    applyPrefs(next);
+    applyTheme(next);
+  };
+
+  const applyPreset = (t: typeof THEMES[number]) => {
+    apply({ ...prefs, theme: t.id, primary_color: t.primary, accent_color: t.accent, sidebar_color: t.sidebar, background_color: t.bg });
   };
 
   const handleSave = async () => {
-    setSaving(true); setSaved(false);
+    setSaving(true);
     try {
       const res = await api.patch('/settings/appearance/', prefs);
-      applyPrefs(res.data.data);
-      if (user) setUser({ ...user, preferences: res.data.data });
+      // Preserve our extra fields (layout_style, etc.) even if API doesn't return them
+      const merged: Prefs = { ...prefs, ...res.data.data };
+      applyTheme(merged);
+      setPrefs(merged);
+      if (user) setUser({ ...user, preferences: merged });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch { alert('Failed to save appearance settings'); }
-    finally { setSaving(false); }
+    } catch {
+      // Still save to local store even if API fails
+      if (user) setUser({ ...user, preferences: prefs });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } finally { setSaving(false); }
   };
 
-  const handleReset = () => { setPrefs(DEFAULT_PREFS); applyPrefs(DEFAULT_PREFS); };
+  const handleReset = () => apply(DEFAULT_PREFS);
 
   if (loading) return (
-    <div className="p-8 flex items-center justify-center h-64">
-      <Loader2 className="w-8 h-8 animate-spin text-primary opacity-50" />
+    <div className="flex items-center justify-center h-64">
+      <Loader2 className="w-6 h-6 animate-spin text-primary opacity-50" />
     </div>
   );
 
+  const activeTheme = THEMES.find(t => t.id === prefs.theme);
+
   return (
-    <div className="p-6 md:p-8 max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <Palette className="w-8 h-8 text-primary" />
-          Appearance
-        </h1>
-        <p className="text-gray-500 mt-1">Personalize the look and feel of the application.</p>
-      </motion.div>
+    <div className="min-h-screen bg-gray-50/60">
 
-      {/* Live Preview Bar */}
-      <motion.div
-        custom={0} variants={sectionVariants} initial="hidden" animate="visible"
-        className="rounded-2xl overflow-hidden shadow border border-gray-100"
-        style={{ background: prefs.background_color }}
-      >
-        <div className="flex items-center gap-3 px-5 py-3" style={{ background: prefs.sidebar_color }}>
-          <div className="w-2 h-2 rounded-full bg-red-400" />
-          <div className="w-2 h-2 rounded-full bg-yellow-400" />
-          <div className="w-2 h-2 rounded-full bg-green-400" />
-          <span className="text-xs text-white/50 ml-2 font-mono">Live Preview</span>
-        </div>
-        <div className="flex h-20">
-          <div className="w-12 shrink-0" style={{ background: prefs.sidebar_color }} />
-          <div className="flex-1 p-4 flex items-center gap-3">
-            <div className="px-3 py-1.5 rounded-lg text-white text-xs font-semibold shadow" style={{ background: prefs.primary_color }}>
-              Primary
+      {/* ── Sticky Header ──────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-3.5">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <Palette className="w-5 h-5 text-primary" />
+              <h1 className="text-lg font-extrabold text-gray-900">Appearance</h1>
             </div>
-            <div className="px-3 py-1.5 rounded-lg text-white text-xs font-semibold shadow" style={{ background: prefs.accent_color }}>
-              Accent
-            </div>
-            <div className="text-xs text-gray-500 ml-auto">
-              {prefs.font_size === 'sm' ? 'Small' : prefs.font_size === 'lg' ? 'Large' : 'Medium'} text · {prefs.layout_density}
-            </div>
+            <p className="text-xs text-gray-400 mt-0.5 hidden sm:block">
+              Personalize your workspace — themes, layouts, typography
+            </p>
           </div>
-        </div>
-      </motion.div>
-
-      {/* Preset Themes */}
-      <motion.div custom={1} variants={sectionVariants} initial="hidden" animate="visible"
-        className="glass rounded-2xl p-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-yellow-500" />
-          <h2 className="font-bold text-gray-900">Quick Themes</h2>
-        </div>
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-          {PRESET_THEMES.map(p => (
-            <button
-              key={p.name}
-              onClick={() => applyPreset(p)}
-              title={p.name}
-              className="group flex flex-col items-center gap-1.5 p-2 rounded-xl border border-gray-100 hover:border-primary hover:shadow-sm transition-all"
-            >
-              <div className="flex gap-0.5">
-                <div className="w-4 h-6 rounded-l-md" style={{ background: p.sidebar }} />
-                <div className="w-6 h-6 rounded-r-md" style={{ background: p.primary }} />
-              </div>
-              <span className="text-[10px] text-gray-500 group-hover:text-primary font-medium">{p.name}</span>
+          <div className="flex items-center gap-2">
+            <AnimatePresence>
+              {saved && (
+                <motion.span initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+                  className="flex items-center gap-1 text-green-600 text-xs font-semibold">
+                  <Check className="w-3.5 h-3.5" /> Saved!
+                </motion.span>
+              )}
+            </AnimatePresence>
+            <button onClick={handleReset} title="Reset to defaults"
+              className="p-2 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-colors">
+              <RotateCcw className="w-4 h-4" />
             </button>
-          ))}
+            <button onClick={handleSave} disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-accent text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-60">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {saving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Color Customization */}
-      <motion.div custom={2} variants={sectionVariants} initial="hidden" animate="visible"
-        className="glass rounded-2xl p-5 space-y-4">
-        <div className="flex items-center gap-2">
-          <Palette className="w-4 h-4 text-primary" />
-          <h2 className="font-bold text-gray-900">Custom Colors</h2>
-        </div>
-        <div className="space-y-1 divide-y divide-gray-50">
-          {([
-            { label: 'Primary Color', key: 'primary_color', desc: 'Buttons, links, highlights' },
-            { label: 'Accent Color', key: 'accent_color', desc: 'Badges, tags, secondary highlights' },
-            { label: 'Sidebar Color', key: 'sidebar_color', desc: 'Navigation bar background' },
-            { label: 'Background Color', key: 'background_color', desc: 'Main content area background' },
-          ] as const).map(({ label, key, desc }) => (
-            <div key={key} className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-sm font-medium text-gray-800">{label}</p>
-                <p className="text-xs text-gray-400">{desc}</p>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        {/* ── Live Preview ─────────────────────────────────────────────── */}
+        <section>
+          <SectionLabel icon={<Monitor className="w-4 h-4 text-primary" />} title="Live Preview" />
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
+            <LayoutMiniPreview mode={prefs.layout_style} prefs={prefs} size="md" />
+            <div className="flex items-center justify-between text-xs text-gray-400">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full inline-block" style={{ background: prefs.primary_color }} />
+                {activeTheme?.name ?? 'Custom Theme'}
+              </span>
+              <span>{LAYOUT_MODES.find(m => m.id === prefs.layout_style)?.name}</span>
+              <span>{prefs.sidebar_position === 'right' && prefs.layout_style !== 'topnav' ? 'Right sidebar' : prefs.layout_style !== 'topnav' ? 'Left sidebar' : ''}</span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Preset Themes ────────────────────────────────────────────── */}
+        <section>
+          <SectionLabel
+            icon={<Sparkles className="w-4 h-4 text-amber-500" />}
+            title="Themes"
+            badge={`${THEMES.length} presets`}
+          />
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              {THEMES.map(t => {
+                const isActive = prefs.theme === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => applyPreset(t)}
+                    className={`relative group flex flex-col rounded-xl overflow-hidden border-2 transition-all duration-150 ${
+                      isActive
+                        ? 'border-primary shadow-md shadow-primary/20 scale-[1.02]'
+                        : 'border-gray-100 hover:border-gray-300 hover:scale-[1.01]'
+                    }`}
+                  >
+                    {/* Mini visual preview */}
+                    <div className="h-14 flex" style={{ background: t.bg }}>
+                      {/* Sidebar strip */}
+                      <div className="w-5 h-full flex flex-col items-center py-1.5 gap-1"
+                        style={{ background: t.sidebar }}>
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ background: t.primary }} />
+                        <div className="w-2.5 h-1 rounded-full" style={{ background: `${t.primary}60` }} />
+                        <div className="w-2.5 h-1 rounded-full" style={{ background: `${t.primary}35` }} />
+                        <div className="w-2.5 h-1 rounded-full" style={{ background: `${t.primary}35` }} />
+                      </div>
+                      {/* Content */}
+                      <div className="flex-1 p-1.5 flex flex-col justify-between">
+                        <div className="w-full h-1 rounded-full" style={{ background: `${t.primary}20` }} />
+                        <div className="flex gap-1">
+                          <div className="w-5 h-3 rounded" style={{ background: t.primary, opacity: 0.85 }} />
+                          <div className="w-4 h-3 rounded" style={{ background: t.accent, opacity: 0.55 }} />
+                        </div>
+                      </div>
+                    </div>
+                    {/* Name label */}
+                    <div className={`px-1 py-1.5 text-center ${isActive ? 'bg-primary/5' : 'bg-white group-hover:bg-gray-50/80'}`}>
+                      <p className={`text-[9px] font-bold truncate leading-none ${isActive ? 'text-primary' : 'text-gray-500'}`}>
+                        {t.name}
+                      </p>
+                    </div>
+                    {/* Active check badge */}
+                    {isActive && (
+                      <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-primary rounded-full flex items-center justify-center shadow-sm">
+                        <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Color swatches row for quick reference */}
+            <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] text-gray-400 font-medium">Active colors:</span>
+              {[
+                { label: 'Primary', color: prefs.primary_color },
+                { label: 'Accent', color: prefs.accent_color },
+                { label: 'Sidebar', color: prefs.sidebar_color },
+              ].map(({ label, color }) => (
+                <div key={label} className="flex items-center gap-1.5">
+                  <div className="w-4 h-4 rounded shadow-sm border border-black/10" style={{ background: color }} />
+                  <span className="text-[10px] text-gray-400">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Layout Style ─────────────────────────────────────────────── */}
+        <section>
+          <SectionLabel icon={<PanelLeft className="w-4 h-4 text-primary" />} title="Layout Style" />
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-4">
+
+            {/* 3 layout mode cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {LAYOUT_MODES.map(mode => {
+                const isActive = prefs.layout_style === mode.id;
+                return (
+                  <button
+                    key={mode.id}
+                    onClick={() => apply({ ...prefs, layout_style: mode.id })}
+                    className={`relative flex flex-col gap-2.5 p-3 rounded-xl border-2 text-left transition-all ${
+                      isActive
+                        ? 'border-primary bg-primary/3 shadow-sm shadow-primary/10'
+                        : 'border-gray-100 hover:border-gray-200 bg-gray-50/40'
+                    }`}
+                  >
+                    <LayoutMiniPreview mode={mode.id} prefs={prefs} size="sm" />
+                    <div>
+                      <p className={`text-xs font-bold ${isActive ? 'text-primary' : 'text-gray-700'}`}>{mode.name}</p>
+                      <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{mode.desc}</p>
+                    </div>
+                    {isActive && (
+                      <span className="absolute top-2 right-2 w-4 h-4 bg-primary rounded-full flex items-center justify-center shadow-sm">
+                        <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Sidebar position — only for sidebar/compact modes */}
+            {prefs.layout_style !== 'topnav' && (
+              <div className="border-t border-gray-50 pt-4">
+                <p className="text-xs font-semibold text-gray-500 mb-2.5">Sidebar Position</p>
+                <div className="flex gap-2">
+                  {[
+                    { id: 'left',  label: 'Left',  Icon: AlignLeft },
+                    { id: 'right', label: 'Right', Icon: AlignRight },
+                  ].map(({ id, label, Icon }) => {
+                    const isActive = prefs.sidebar_position === id;
+                    return (
+                      <button
+                        key={id}
+                        onClick={() => apply({ ...prefs, sidebar_position: id })}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-all ${
+                          isActive
+                            ? 'border-primary text-primary bg-primary/5'
+                            : 'border-gray-200 text-gray-500 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-lg border border-gray-200 shadow-sm cursor-pointer"
-                  style={{ background: (prefs as any)[key] }}
-                />
-                <input
-                  type="color" value={(prefs as any)[key]}
-                  onChange={e => {
-                    const next = { ...prefs, [key]: e.target.value };
-                    setPrefs(next);
-                    applyPrefs(next);
-                  }}
-                  className="w-10 h-9 rounded-lg cursor-pointer border border-gray-200 p-0.5 bg-white"
-                />
+            )}
+          </div>
+        </section>
+
+        {/* ── Custom Colors (collapsible) ───────────────────────────────── */}
+        <section>
+          <button
+            onClick={() => setColorsOpen(v => !v)}
+            className="w-full flex items-center justify-between py-1.5 group mb-1"
+          >
+            <div className="flex items-center gap-2">
+              <Palette className="w-4 h-4 text-primary" />
+              <span className="text-sm font-bold text-gray-900">Custom Colors</span>
+              <span className="text-xs text-gray-400">Fine-tune individual colors</span>
+            </div>
+            <motion.div animate={{ rotate: colorsOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            </motion.div>
+          </button>
+
+          <AnimatePresence initial={false}>
+            {colorsOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.22 }}
+                className="overflow-hidden"
+              >
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+                  {([
+                    { label: 'Primary Color',    key: 'primary_color',    desc: 'Buttons, links, active states' },
+                    { label: 'Accent Color',     key: 'accent_color',     desc: 'Badges, highlights, secondary elements' },
+                    { label: 'Sidebar Color',    key: 'sidebar_color',    desc: 'Navigation background' },
+                    { label: 'Background Color', key: 'background_color', desc: 'Main content area background' },
+                  ] as const).map(({ label, key, desc }) => (
+                    <div key={key} className="flex items-center justify-between px-5 py-3.5">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">{label}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg border border-gray-200 shadow-sm"
+                          style={{ background: prefs[key] }} />
+                        <input
+                          type="color"
+                          value={prefs[key]}
+                          onChange={e => apply({ ...prefs, theme: 'custom', [key]: e.target.value })}
+                          className="w-10 h-9 rounded-lg cursor-pointer border border-gray-200 p-0.5 bg-white"
+                        />
+                        <span className="text-[10px] font-mono text-gray-400 hidden sm:block w-14">
+                          {prefs[key]}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
+
+        {/* ── Typography & Density ─────────────────────────────────────── */}
+        <section>
+          <SectionLabel icon={<Type className="w-4 h-4 text-primary" />} title="Typography & Density" />
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-5">
+
+            {/* Font size */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 mb-2.5">Font Size</p>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { val: 'sm', label: 'Small',  cls: 'text-xs' },
+                  { val: 'md', label: 'Medium', cls: 'text-sm' },
+                  { val: 'lg', label: 'Large',  cls: 'text-base' },
+                ].map(opt => {
+                  const active = prefs.font_size === opt.val;
+                  return (
+                    <button key={opt.val}
+                      onClick={() => apply({ ...prefs, font_size: opt.val })}
+                      className={`py-3 rounded-xl border-2 flex flex-col items-center gap-1 transition-all ${
+                        active ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10' : 'border-gray-200 hover:border-gray-300 bg-white'
+                      }`}
+                    >
+                      <span className={`font-bold ${opt.cls} ${active ? 'text-primary' : 'text-gray-600'}`}>Aa</span>
+                      <span className="text-[10px] text-gray-500 font-medium">{opt.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          ))}
-        </div>
-      </motion.div>
 
-      {/* Display Options */}
-      <motion.div custom={3} variants={sectionVariants} initial="hidden" animate="visible"
-        className="glass rounded-2xl p-5 space-y-5">
-        <div className="flex items-center gap-2">
-          <Monitor className="w-4 h-4 text-primary" />
-          <h2 className="font-bold text-gray-900">Display Options</h2>
-        </div>
+            {/* Layout density */}
+            <div className="border-t border-gray-50 pt-4">
+              <p className="text-xs font-semibold text-gray-500 mb-2.5">Layout Density</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { val: 'compact',     label: 'Compact',     desc: 'More content, tighter spacing' },
+                  { val: 'comfortable', label: 'Comfortable', desc: 'Relaxed, easy to scan' },
+                ].map(opt => {
+                  const active = prefs.layout_density === opt.val;
+                  return (
+                    <button key={opt.val}
+                      onClick={() => apply({ ...prefs, layout_density: opt.val })}
+                      className={`py-3 px-4 rounded-xl border-2 text-left transition-all ${
+                        active ? 'border-primary bg-primary/5 shadow-sm shadow-primary/10' : 'border-gray-200 hover:border-gray-300 bg-white'
+                      }`}
+                    >
+                      <p className={`text-sm font-bold ${active ? 'text-primary' : 'text-gray-700'}`}>{opt.label}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{opt.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
-            <Type className="w-4 h-4" /> Font Size
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {[{ val: 'sm', label: 'Small', size: 'text-xs' }, { val: 'md', label: 'Medium', size: 'text-sm' }, { val: 'lg', label: 'Large', size: 'text-base' }].map(opt => (
-              <button key={opt.val}
-                onClick={() => setPrefs(p => ({ ...p, font_size: opt.val }))}
-                className={`py-3 rounded-xl border-2 transition-all flex flex-col items-center gap-1 ${prefs.font_size === opt.val
-                  ? 'border-primary bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300 bg-white'}`}
-              >
-                <span className={`font-semibold ${opt.size} ${prefs.font_size === opt.val ? 'text-primary' : 'text-gray-600'}`}>Aa</span>
-                <span className="text-xs text-gray-500">{opt.label}</span>
-              </button>
-            ))}
+            {/* Density visual reference */}
+            <div className="border-t border-gray-50 pt-4">
+              <p className="text-[10px] text-gray-400 mb-2">Preview</p>
+              <div className={`border border-gray-100 rounded-xl bg-gray-50 ${prefs.layout_density === 'compact' ? 'p-2' : 'p-4'}`}>
+                <div className={`flex items-center gap-3 ${prefs.layout_density === 'compact' ? 'py-1.5' : 'py-2.5'} border-b border-gray-100`}>
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="h-2 w-24 bg-gray-200 rounded-full mb-1" />
+                    <div className="h-1.5 w-16 bg-gray-100 rounded-full" />
+                  </div>
+                  <div className="h-5 w-12 rounded" style={{ background: `${prefs.primary_color}20` }} />
+                </div>
+                <div className={`flex items-center gap-3 ${prefs.layout_density === 'compact' ? 'py-1.5' : 'py-2.5'}`}>
+                  <div className="w-6 h-6 rounded-full bg-accent/20 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="h-2 w-20 bg-gray-200 rounded-full mb-1" />
+                    <div className="h-1.5 w-12 bg-gray-100 rounded-full" />
+                  </div>
+                  <div className="h-5 w-12 rounded" style={{ background: `${prefs.accent_color}20` }} />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
-            <LayoutGrid className="w-4 h-4" /> Layout Density
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { val: 'compact', label: 'Compact', desc: 'More content, less spacing' },
-              { val: 'comfortable', label: 'Comfortable', desc: 'Relaxed, easy to scan' },
-            ].map(opt => (
-              <button key={opt.val}
-                onClick={() => setPrefs(p => ({ ...p, layout_density: opt.val }))}
-                className={`py-3 px-4 rounded-xl border-2 text-left transition-all ${prefs.layout_density === opt.val
-                  ? 'border-primary bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300 bg-white'}`}
-              >
-                <p className={`text-sm font-semibold ${prefs.layout_density === opt.val ? 'text-primary' : 'text-gray-700'}`}>{opt.label}</p>
-                <p className="text-xs text-gray-400">{opt.desc}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-      </motion.div>
+        {/* ── Bottom spacer ─────────────────────────────────────────────── */}
+        <div className="h-6" />
+      </div>
+    </div>
+  );
+}
 
-      {/* Footer Actions */}
-      <motion.div custom={4} variants={sectionVariants} initial="hidden" animate="visible"
-        className="flex items-center justify-between gap-4 pt-2">
-        <AnimatePresence>
-          {saved && (
-            <motion.span
-              initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-              className="text-green-600 text-sm flex items-center gap-1.5 font-medium"
-            >
-              <Check className="w-4 h-4" /> Appearance saved!
-            </motion.span>
-          )}
-        </AnimatePresence>
-        <div className="ml-auto flex gap-3">
-          <button onClick={handleReset}
-            className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">
-            <RotateCcw className="w-4 h-4" /> Reset
-          </button>
-          <button onClick={handleSave} disabled={saving}
-            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-primary to-accent text-white rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-70">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            Save Appearance
-          </button>
-        </div>
-      </motion.div>
+// ── Section Label helper ──────────────────────────────────────────────────────
+function SectionLabel({ icon, title, badge }: { icon: React.ReactNode; title: string; badge?: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      {icon}
+      <h2 className="text-sm font-bold text-gray-900">{title}</h2>
+      {badge && <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full font-medium">{badge}</span>}
     </div>
   );
 }

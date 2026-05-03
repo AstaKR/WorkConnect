@@ -19,6 +19,8 @@ interface User {
     background_color: string;
     font_size: string;
     layout_density: string;
+    layout_style?: string;    // 'sidebar' | 'compact' | 'topnav'
+    sidebar_position?: string; // 'left' | 'right'
   };
 }
 
@@ -62,8 +64,6 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: false
       })
     }),
-    {
-      name: 'auth-storage',
-    }
+    { name: 'auth-storage' }
   )
 );
