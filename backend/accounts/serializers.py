@@ -49,7 +49,7 @@ class UserSerializer(serializers.ModelSerializer):
             # Meta
             'date_joined', 'preferences',
         ]
-        read_only_fields = ['id', 'date_joined', 'preferences', 'profile_pic_url', 'manager_name', 'manager_email']
+        read_only_fields = ['id', 'account_type', 'date_joined', 'preferences', 'profile_pic_url', 'manager_name', 'manager_email']
 
     def get_profile_pic_url(self, obj):
         if obj.profile_pic:
