@@ -21,12 +21,17 @@ import LandingPage from './pages/LandingPage';
 import ERPlan from './pages/ERPlan';
 import LocationManagement from './pages/LocationManagement';
 import RoleManagement from './pages/RoleManagement';
+import IndividualDashboard from './pages/IndividualDashboard';
 import Layout from './components/Layout';
 import { useAuthStore } from './store/useAuthStore';
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) => {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  // Individual users bypass role restrictions — they are their own admin
+  if (user?.account_type === 'individual') return <>{children}</>;
+
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
     if (user.role === 'ceo') return <Navigate to="/ceo/dashboard" replace />;
     if (user.role === 'manager') return <Navigate to="/manager/dashboard" replace />;
@@ -79,6 +84,9 @@ function App() {
 
           {/* ER Plans / Kanban */}
           <Route path="/kanban" element={<ProtectedRoute allowedRoles={['employee', 'manager', 'ceo']}><KanbanBoard /></ProtectedRoute>} />
+
+          {/* Individual */}
+          <Route path="/individual/dashboard" element={<ProtectedRoute><IndividualDashboard /></ProtectedRoute>} />
 
           {/* Manager */}
           <Route path="/manager/dashboard" element={<ProtectedRoute allowedRoles={['manager', 'ceo']}><ManagerDashboard /></ProtectedRoute>} />
