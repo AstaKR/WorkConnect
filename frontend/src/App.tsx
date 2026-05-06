@@ -17,6 +17,7 @@ import Profile from './pages/Profile';
 import AppearanceSettings from './pages/AppearanceSettings';
 import CalendarView from './pages/CalendarView';
 import KanbanBoard from './pages/KanbanBoard';
+import LandingPage from './pages/LandingPage';
 import ERPlan from './pages/ERPlan';
 import LocationManagement from './pages/LocationManagement';
 import RoleManagement from './pages/RoleManagement';
@@ -62,7 +63,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Public */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/share/:token" element={<SharedReport />} />
