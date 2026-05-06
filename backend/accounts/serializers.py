@@ -36,7 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'email', 'full_name', 'role', 'is_active',
+            'id', 'email', 'full_name', 'role', 'account_type', 'is_active',
             # Personal
             'profile_pic', 'profile_pic_url', 'dob', 'phone',
             'address', 'city', 'state', 'pincode',
@@ -66,7 +66,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'email', 'full_name', 'password', 'role',
+            'email', 'full_name', 'password', 'role', 'account_type',
             'dob', 'phone', 'address', 'city', 'state', 'pincode',
             'employee_id', 'designation', 'grade', 'department',
             'manager', 'employment_status', 'start_date', 'last_working_date',
