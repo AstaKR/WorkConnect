@@ -171,3 +171,44 @@ describe('AudienceSection', () => {
     expect(screen.getByText(/tomas/i)).toBeInTheDocument();
   });
 });
+
+import FinalCTA from '../FinalCTA';
+
+describe('FinalCTA', () => {
+  it('renders the CTA heading', () => {
+    render(<MemoryRouter><FinalCTA /></MemoryRouter>);
+    expect(screen.getByText(/ready to take control/i)).toBeInTheDocument();
+  });
+
+  it('renders Get Started Free button linking to /signup', () => {
+    render(<MemoryRouter><FinalCTA /></MemoryRouter>);
+    const links = screen.getAllByRole('link', { name: /get started free/i });
+    expect(links[0]).toHaveAttribute('href', '/signup');
+  });
+
+  it('renders GitHub source link', () => {
+    render(<MemoryRouter><FinalCTA /></MemoryRouter>);
+    expect(screen.getByRole('link', { name: /view source on github/i })).toBeInTheDocument();
+  });
+});
+
+import LandingFooter from '../LandingFooter';
+
+describe('LandingFooter', () => {
+  it('renders the brand name', () => {
+    render(<LandingFooter />);
+    expect(screen.getByText('WorkConnect')).toBeInTheDocument();
+  });
+
+  it('renders use-case footer links', () => {
+    render(<LandingFooter />);
+    expect(screen.getByText('For Individuals')).toBeInTheDocument();
+    expect(screen.getByText('For Teams')).toBeInTheDocument();
+    expect(screen.getByText('For Developers')).toBeInTheDocument();
+  });
+
+  it('renders MIT license badge', () => {
+    render(<LandingFooter />);
+    expect(screen.getByText('MIT License')).toBeInTheDocument();
+  });
+});

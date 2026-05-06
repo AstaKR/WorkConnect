@@ -4,6 +4,8 @@ import StatsBar from '../components/landing/StatsBar';
 import FeaturesSection from '../components/landing/FeaturesSection';
 import AISection from '../components/landing/AISection';
 import AudienceSection from '../components/landing/AudienceSection';
+import FinalCTA from '../components/landing/FinalCTA';
+import LandingFooter from '../components/landing/LandingFooter';
 
 export default function LandingPage() {
   return (
@@ -14,6 +16,8 @@ export default function LandingPage() {
       <FeaturesSection />
       <AISection />
       <AudienceSection />
+      <FinalCTA />
+      <LandingFooter />
     </div>
   );
 }
