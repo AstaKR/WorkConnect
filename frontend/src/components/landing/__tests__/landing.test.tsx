@@ -123,3 +123,26 @@ describe('FeaturesSection', () => {
     expect(screen.getByText('Full Customization')).toBeInTheDocument();
   });
 });
+
+import AISection from '../AISection';
+
+describe('AISection', () => {
+  it('renders the AI section heading', () => {
+    render(<AISection />);
+    expect(screen.getByText(/your ai assistant/i)).toBeInTheDocument();
+  });
+
+  it('renders all 4 AI provider pills', () => {
+    render(<AISection />);
+    expect(screen.getByText(/claude.*anthropic/i)).toBeInTheDocument();
+    expect(screen.getByText(/gpt-4.*openai/i)).toBeInTheDocument();
+    expect(screen.getByText(/groq/i)).toBeInTheDocument();
+    expect(screen.getByText(/gemini.*google/i)).toBeInTheDocument();
+  });
+
+  it('renders the chat preview with AI messages', () => {
+    render(<AISection />);
+    expect(screen.getByText(/how has my productivity/i)).toBeInTheDocument();
+    expect(screen.getByText(/23 of 25 reports/i)).toBeInTheDocument();
+  });
+});

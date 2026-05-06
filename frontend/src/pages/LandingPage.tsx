@@ -2,6 +2,7 @@ import LandingNav from '../components/landing/LandingNav';
 import HeroSection from '../components/landing/HeroSection';
 import StatsBar from '../components/landing/StatsBar';
 import FeaturesSection from '../components/landing/FeaturesSection';
+import AISection from '../components/landing/AISection';
 
 export default function LandingPage() {
   return (
@@ -10,6 +11,7 @@ export default function LandingPage() {
       <HeroSection />
       <StatsBar />
       <FeaturesSection />
+      <AISection />
     </div>
   );
 }
