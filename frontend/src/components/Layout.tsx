@@ -69,13 +69,26 @@ const SETTINGS_GROUP = {
 } as const;
 
 const ROLE_BADGE: Record<string,{ label:string; cls:string }> = {
-  ceo:      { label:'CEO',      cls:'bg-amber-400/20 text-amber-300 border border-amber-400/30' },
-  manager:  { label:'Manager',  cls:'bg-blue-400/20 text-blue-300 border border-blue-400/30' },
-  employee: { label:'Employee', cls:'bg-emerald-400/20 text-emerald-300 border border-emerald-400/30' },
+  ceo:        { label:'CEO',      cls:'bg-amber-400/20 text-amber-300 border border-amber-400/30' },
+  manager:    { label:'Manager',  cls:'bg-blue-400/20 text-blue-300 border border-blue-400/30' },
+  employee:   { label:'Employee', cls:'bg-emerald-400/20 text-emerald-300 border border-emerald-400/30' },
+  individual: { label:'Personal', cls:'bg-violet-400/20 text-violet-300 border border-violet-400/30' },
 };
 
 type AnyGroup = typeof NAV_GROUPS[number] | typeof SETTINGS_GROUP;
-function visibleItems(g: AnyGroup, role: string) {
+function visibleItems(g: AnyGroup, role: string, accountType = 'organization') {
+  // Individual users: show all settings (overrides ceo-only restriction),
+  // reroute "My Dashboard" to /individual/dashboard
+  // (management group already excluded at group level since role='employee')
+  if (accountType === 'individual') {
+    if (g.id === 'settings') {
+      return [...g.items] as any[];
+    }
+    const base = g.items.filter(i => (i.roles as readonly string[]).includes(role));
+    return base.map(i =>
+      i.to === '/employee/dashboard' ? { ...i, to: '/individual/dashboard' } : i
+    ) as any[];
+  }
   return g.items.filter(i => (i.roles as readonly string[]).includes(role));
 }
 
@@ -167,6 +180,7 @@ function CompactSidebarContent({ isRight }: { isRight: boolean }) {
   const navigate = useNavigate();
   const initials = user?.full_name?.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() ?? '?';
   const role = user?.role ?? 'employee';
+  const accountType = user?.account_type ?? 'organization';
   const groups: AnyGroup[] = [...NAV_GROUPS.filter(g=>(g.roles as readonly string[]).includes(role)), SETTINGS_GROUP];
 
   return (
@@ -181,7 +195,7 @@ function CompactSidebarContent({ isRight }: { isRight: boolean }) {
       </div>
       <div className="w-8 h-px bg-white/10 mb-1" />
       {groups.map(group => {
-        const items = visibleItems(group, role);
+        const items = visibleItems(group, role, accountType);
         if (!items.length) return null;
         return <CompactGroupButton key={group.id} group={group} items={items as AnyGroup['items'][number][]} isRight={isRight} />;
       })}
@@ -208,7 +222,9 @@ function FullSidebarContent({ onClose }: { onClose?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const role = user?.role ?? 'employee';
-  const rb = ROLE_BADGE[role] ?? ROLE_BADGE.employee;
+  const accountType = user?.account_type ?? 'organization';
+  const badgeKey = accountType === 'individual' ? 'individual' : role;
+  const rb = ROLE_BADGE[badgeKey] ?? ROLE_BADGE.employee;
   const initials = user?.full_name?.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() ?? '?';
   const companyName = branding.name && branding.name !== APP_NAME ? branding.name : '';
 
@@ -251,7 +267,7 @@ function FullSidebarContent({ onClose }: { onClose?: () => void }) {
       {/* Nav */}
       <nav className="flex-1 px-3 pb-3 overflow-y-auto space-y-0.5 scrollbar-none">
         {allGroups.map(group => {
-          const items = visibleItems(group, role);
+          const items = visibleItems(group, role, accountType);
           if (!items.length) return null;
           const Icon = group.icon;
           const isOpen = openGroups.has(group.id);
@@ -472,7 +488,9 @@ function TopNavLayout() {
   const [mobileExpanded, setMobileExpanded] = useState<string|null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const role = user?.role ?? 'employee';
-  const rb = ROLE_BADGE[role] ?? ROLE_BADGE.employee;
+  const accountType = user?.account_type ?? 'organization';
+  const badgeKey = accountType === 'individual' ? 'individual' : role;
+  const rb = ROLE_BADGE[badgeKey] ?? ROLE_BADGE.employee;
   const initials = user?.full_name?.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() ?? '?';
 
   const allGroups: AnyGroup[] = [...NAV_GROUPS.filter(g=>(g.roles as readonly string[]).includes(role)), SETTINGS_GROUP];
@@ -495,7 +513,7 @@ function TopNavLayout() {
   const close = () => setOpenGroup(null);
 
   // Active page label for breadcrumb
-  const activeItem = allGroups.flatMap(g => visibleItems(g, role)).find(i => i.to === location.pathname);
+  const activeItem = allGroups.flatMap(g => visibleItems(g, role, accountType)).find(i => i.to === location.pathname);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden" style={{ background:'var(--color-background)' }}>
@@ -523,12 +541,12 @@ function TopNavLayout() {
           {/* Desktop nav — NO overflow:auto so dropdowns aren't clipped */}
           <nav className="hidden lg:flex items-center gap-0.5 flex-1">
             {allGroups.map((group, idx) => {
-              const items = visibleItems(group, role);
+              const items = visibleItems(group, role, accountType);
               if (!items.length) return null;
               const Icon = group.icon;
               const isOpen = openGroup === group.id;
               const hasActive = items.some(i => location.pathname === i.to);
-              const alignRight = idx === allGroups.filter(g => visibleItems(g,role).length>0).length - 1;
+              const alignRight = idx === allGroups.filter(g => visibleItems(g, role, accountType).length>0).length - 1;
 
               return (
                 <div key={group.id} className="relative flex-shrink-0">
@@ -691,7 +709,7 @@ function TopNavLayout() {
             >
               <div className="px-3 py-3 max-h-[70vh] overflow-y-auto space-y-1">
                 {allGroups.map(group => {
-                  const items = visibleItems(group, role);
+                  const items = visibleItems(group, role, accountType);
                   if (!items.length) return null;
                   const Icon = group.icon;
                   const isExp = mobileExpanded === group.id;
