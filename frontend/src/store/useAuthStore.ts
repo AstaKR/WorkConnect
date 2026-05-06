@@ -6,6 +6,7 @@ interface User {
   email: string;
   full_name: string;
   role: 'employee' | 'manager' | 'ceo';
+  account_type: 'organization' | 'individual';
   department: string | null;
   employee_id: string | null;
   manager: number | null;
