@@ -8,7 +8,8 @@
 | Backend differentiation | New `account_type` field on User: `'organization'` (default) \| `'individual'` |
 | Individual user's Django `role` | `'employee'` (reuses existing permission logic) |
 | Individual dashboard route | New `/individual/dashboard` page (separate from `/employee/dashboard`) |
-| Individual sidebar | Simplified — no team/manager/approval nav items |
+| Individual sidebar | Simplified — no team/manager/approval nav items; full Settings access |
+| Individual settings access | Full — same as CEO (Profile, Appearance, Notifications, System/AI keys, Locations) |
 | Post-login routing | `account_type === 'individual'` → `/individual/dashboard` |
 
 ---
@@ -150,31 +151,41 @@ else navigate('/employee/dashboard');
 
 ### 2.4 ProtectedRoute — `frontend/src/App.tsx`
 
-Update the fallback in `ProtectedRoute` to also handle `account_type === 'individual'`:
+**Update `ProtectedRoute` to treat individual users as having full admin access to settings.**
+
+Individual users are their own administrators — they own their own AI API keys and workspace config. The check becomes:
 
 ```ts
-if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-  if (user.account_type === 'individual') return <Navigate to="/individual/dashboard" replace />;
-  if (user.role === 'ceo') return <Navigate to="/ceo/dashboard" replace />;
-  if (user.role === 'manager') return <Navigate to="/manager/dashboard" replace />;
-  return <Navigate to="/employee/dashboard" replace />;
-}
+const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) => {
+  const { isAuthenticated, user } = useAuthStore();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  // Individual users bypass role restrictions — they are their own admin
+  if (user?.account_type === 'individual') return <>{children}</>;
+
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    if (user.role === 'ceo') return <Navigate to="/ceo/dashboard" replace />;
+    if (user.role === 'manager') return <Navigate to="/manager/dashboard" replace />;
+    return <Navigate to="/employee/dashboard" replace />;
+  }
+  return <>{children}</>;
+};
 ```
+
+This means individual users can access **every** route including:
+- `/settings/system` — AI provider API keys (Claude, GPT-4, Groq, Gemini)
+- `/settings/locations` — location management
+- `/settings/profile`, `/settings/appearance`, `/settings/notifications`
+
+They will **not** see the Manager/CEO/User Management pages in their sidebar (handled in Layout.tsx), but if they navigate there directly, they can access the underlying data. This is acceptable since they have no team to damage — they are a solo user.
 
 Add the new individual route inside `<ProtectedLayout>`:
 
 ```tsx
-<Route
-  path="/individual/dashboard"
-  element={
-    <ProtectedRoute allowedRoles={['employee']}>
-      <IndividualDashboard />
-    </ProtectedRoute>
-  }
-/>
+<Route path="/individual/dashboard" element={<ProtectedRoute><IndividualDashboard /></ProtectedRoute>} />
 ```
 
-Individual users can also access existing shared routes (`/kanban`, `/employee/report`, `/employee/history`, `/employee/calendar`, `/settings/*`) — no changes needed there since they have `role='employee'`.
+No `allowedRoles` needed — individual users bypass the check; org users who navigate here directly are fine too (they'll just see a personal-style dashboard).
 
 ### 2.5 New page — `frontend/src/pages/IndividualDashboard.tsx`
 
@@ -197,12 +208,28 @@ A personal-focused dashboard. No team/manager/approval widgets.
 
 ### 2.6 Sidebar — `frontend/src/components/Layout.tsx`
 
-The sidebar (or `Layout.tsx`) already shows navigation items. For individual users, hide team-only items:
+For individual users the sidebar shows all personal features **plus full Settings**, but hides team management pages:
 
-- Hide: Manager Dashboard, CEO Dashboard, User Management, Role Management
-- Show: Dashboard (→ `/individual/dashboard`), Work Log, Report History, Kanban, Calendar, Settings
+**Shown for individual users:**
+- Dashboard (→ `/individual/dashboard`)
+- Work Log (→ `/employee/report`)
+- Report History (→ `/employee/history`)
+- Kanban (→ `/kanban`)
+- Calendar (→ `/employee/calendar`)
+- Settings group:
+  - Profile (→ `/settings/profile`)
+  - Appearance (→ `/settings/appearance`)
+  - Notifications (→ `/settings/notifications`)
+  - **System / AI Keys** (→ `/settings/system`) ← same page as CEO uses, full AI provider config
+  - **Locations** (→ `/settings/locations`)
 
-Implementation: check `user.account_type === 'individual'` (or equivalently `user.role === 'employee' && user.account_type === 'individual'`) and filter nav items accordingly.
+**Hidden for individual users:**
+- Manager Dashboard
+- CEO Dashboard
+- User Management
+- Role Management
+
+Implementation: check `user.account_type === 'individual'` and filter the nav item list. The Settings section for individual users shows all 5 settings links including System and Locations.
 
 ---
 
@@ -244,5 +271,9 @@ Implementation: check `user.account_type === 'individual'` (or equivalently `use
 - After org login, existing routing (ceo/manager/employee) is unchanged
 - Individual dashboard shows personal stats, AI insight, recent activity, quick actions — no team widgets
 - Sidebar for individual users hides manager/CEO/user management nav items
+- Sidebar for individual users shows all 5 Settings links including System (AI API keys) and Locations
+- Individual user can navigate to `/settings/system` and configure AI provider API keys (Claude, GPT-4, Groq, Gemini) — same SystemSettings page as CEO
+- Individual user can navigate to `/settings/locations` and manage locations
+- `ProtectedRoute` bypasses role restrictions for `account_type === 'individual'` — all routes accessible
 - Existing org users (pre-existing accounts without `account_type`) get `account_type='organization'` by migration default — no disruption
 - No TypeScript errors, no console errors
