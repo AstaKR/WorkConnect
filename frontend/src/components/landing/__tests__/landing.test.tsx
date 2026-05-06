@@ -86,3 +86,40 @@ describe('HeroSection', () => {
     expect(screen.getByText('app.workconnect.io/dashboard')).toBeInTheDocument();
   });
 });
+
+import StatsBar from '../StatsBar';
+
+describe('StatsBar', () => {
+  it('renders all 4 stats', () => {
+    render(<StatsBar />);
+    expect(screen.getByText('100%')).toBeInTheDocument();
+    expect(screen.getByText('4')).toBeInTheDocument();
+    expect(screen.getByText('Custom')).toBeInTheDocument();
+    expect(screen.getByText('15+')).toBeInTheDocument();
+  });
+
+  it('shows custom roles messaging', () => {
+    render(<StatsBar />);
+    expect(screen.getByText(/roles & approval flows/i)).toBeInTheDocument();
+    expect(screen.getByText(/you define who approves what/i)).toBeInTheDocument();
+  });
+});
+
+import FeaturesSection from '../FeaturesSection';
+
+describe('FeaturesSection', () => {
+  it('renders the section heading', () => {
+    render(<FeaturesSection />);
+    expect(screen.getByText(/built for how real work gets done/i)).toBeInTheDocument();
+  });
+
+  it('renders all 6 feature cards', () => {
+    render(<FeaturesSection />);
+    expect(screen.getByText('Work Reports')).toBeInTheDocument();
+    expect(screen.getByText('Kanban Board')).toBeInTheDocument();
+    expect(screen.getByText('Team Calendar')).toBeInTheDocument();
+    expect(screen.getByText('Custom Roles & Approvals')).toBeInTheDocument();
+    expect(screen.getByText('Smart Dashboards')).toBeInTheDocument();
+    expect(screen.getByText('Full Customization')).toBeInTheDocument();
+  });
+});
