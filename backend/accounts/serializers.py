@@ -88,6 +88,15 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         return value.lower().strip()
 
+    def validate(self, attrs):
+        account_type = attrs.get('account_type', 'organization')
+        role = attrs.get('role', 'employee')
+        if account_type == 'individual' and role != 'employee':
+            raise serializers.ValidationError(
+                {'role': 'Individual accounts must have role="employee".'}
+            )
+        return attrs
+
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
 

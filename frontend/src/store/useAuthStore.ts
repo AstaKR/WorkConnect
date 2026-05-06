@@ -6,7 +6,7 @@ interface User {
   email: string;
   full_name: string;
   role: 'employee' | 'manager' | 'ceo';
-  account_type: 'organization' | 'individual';
+  account_type?: 'organization' | 'individual';  // optional — pre-existing sessions may not have this field
   department: string | null;
   employee_id: string | null;
   manager: number | null;

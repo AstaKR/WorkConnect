@@ -190,7 +190,7 @@ export default function Signup() {
           <button
             type="button"
             data-testid="type-org"
-            onClick={() => setAccountType('organization')}
+            onClick={() => { setAccountType('organization'); setError(''); setSuccess(''); }}
             className={`flex-1 flex flex-col items-center gap-2 py-4 px-3 rounded-2xl border-2 transition-all cursor-pointer ${
               accountType === 'organization'
                 ? 'border-primary bg-primary/5 shadow-sm'
@@ -210,7 +210,7 @@ export default function Signup() {
           <button
             type="button"
             data-testid="type-individual"
-            onClick={() => setAccountType('individual')}
+            onClick={() => { setAccountType('individual'); setError(''); setSuccess(''); }}
             className={`flex-1 flex flex-col items-center gap-2 py-4 px-3 rounded-2xl border-2 transition-all cursor-pointer ${
               accountType === 'individual'
                 ? 'border-amber-400 bg-amber-50/50 shadow-sm'
