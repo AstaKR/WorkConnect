@@ -146,3 +146,28 @@ describe('AISection', () => {
     expect(screen.getByText(/23 of 25 reports/i)).toBeInTheDocument();
   });
 });
+
+import AudienceSection from '../AudienceSection';
+
+describe('AudienceSection', () => {
+  it('renders the section heading', () => {
+    render(<AudienceSection />);
+    expect(screen.getByText(/built for anyone who works/i)).toBeInTheDocument();
+  });
+
+  it('renders all 5 audience cards', () => {
+    render(<AudienceSection />);
+    expect(screen.getByText('Business Owners & Managers')).toBeInTheDocument();
+    expect(screen.getByText('Individuals & Self-improvers')).toBeInTheDocument();
+    expect(screen.getByText('Developers & IT Teams')).toBeInTheDocument();
+    expect(screen.getByText('Remote & Distributed Teams')).toBeInTheDocument();
+    expect(screen.getByText('Startups & Small Teams')).toBeInTheDocument();
+  });
+
+  it('renders real-world scenario names', () => {
+    render(<AudienceSection />);
+    expect(screen.getByText(/ahmed/i)).toBeInTheDocument();
+    expect(screen.getByText(/riya/i)).toBeInTheDocument();
+    expect(screen.getByText(/tomas/i)).toBeInTheDocument();
+  });
+});
