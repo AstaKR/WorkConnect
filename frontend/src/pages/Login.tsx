@@ -56,8 +56,9 @@ export default function Login() {
       const { access, refresh, user } = response.data;
       setAuth(access, refresh, user);
       
-      // Role-based routing
-      if (user.role === 'ceo') navigate('/ceo/dashboard');
+      // Account-type and role-based routing
+      if (user.account_type === 'individual') navigate('/individual/dashboard');
+      else if (user.role === 'ceo') navigate('/ceo/dashboard');
       else if (user.role === 'manager') navigate('/manager/dashboard');
       else navigate('/employee/dashboard');
       
