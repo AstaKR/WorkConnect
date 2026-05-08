@@ -52,9 +52,12 @@ export default function LandingFooter() {
           ))}
         </div>
         <div className="border-t border-white/[0.04] pt-6 flex items-center justify-between">
-          <p className="text-[12px] text-slate-800">
-            © 2026 WorkConnect. Open source under MIT License.
-          </p>
+          <div>
+            <p className="text-[12px] text-slate-800">
+              © 2026 WorkConnect. Open source under MIT License.
+            </p>
+            <p className="text-[11px] text-slate-700 mt-1">v1.1.0</p>
+          </div>
           <div className="flex gap-2">
             {BADGES.map(b => (
               <span
