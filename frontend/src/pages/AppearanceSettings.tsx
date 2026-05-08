@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Check, Loader2, Palette, Monitor, Type, LayoutGrid,
-  Sparkles, RotateCcw, ChevronDown,
+  Sparkles, RotateCcw, ChevronDown, Info,
   PanelLeft, AlignLeft, AlignRight,
 } from 'lucide-react';
 import api from '../api/axios';
@@ -545,6 +545,28 @@ export default function AppearanceSettings() {
             </div>
           </div>
         </section>
+
+        {/* ── About Section ────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="glass p-6 rounded-2xl mt-6"
+        >
+          <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+            <Info className="w-5 h-5" /> About
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-600">WorkConnect Version</p>
+              <p className="text-lg font-semibold text-gray-900">v1.1.0</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Release Date</p>
+              <p className="text-sm text-gray-900">May 2026</p>
+            </div>
+          </div>
+        </motion.div>
 
         {/* ── Bottom spacer ─────────────────────────────────────────────── */}
         <div className="h-6" />
