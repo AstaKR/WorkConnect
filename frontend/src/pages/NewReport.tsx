@@ -124,8 +124,8 @@ export default function NewReport() {
   };
 
   const handleClickOutside = (e: React.MouseEvent) => {
-    // Only unfocus if clicking on the background, not on task items
-    if (e.target === e.currentTarget) {
+    // Only unfocus if clicking directly on the background, not on task items or their children
+    if (e.target === e.currentTarget && !e.defaultPrevented) {
       setFocusedTaskId(null);
     }
   };

@@ -37,7 +37,10 @@ export default function MinimizedTaskItem({ task, onClick }: MinimizedTaskItemPr
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.25, ease: 'easeInOut' }}
-      onClick={() => onClick(task.id)}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick(task.id);
+      }}
       className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow-md hover:border-gray-200 cursor-pointer transition-all mb-2"
     >
       <div className="flex items-center gap-3 flex-1">

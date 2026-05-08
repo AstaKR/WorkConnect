@@ -47,6 +47,7 @@ export default function ExpandedTaskItem({
       animate={{ opacity: 1, height: 'auto' }}
       exit={{ opacity: 0, height: 0 }}
       transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }} // spring curve
+      onClick={(e) => e.stopPropagation()}
       className="flex items-start gap-3 p-4 bg-white border border-gray-100 rounded-xl shadow-sm mb-3"
     >
       <div

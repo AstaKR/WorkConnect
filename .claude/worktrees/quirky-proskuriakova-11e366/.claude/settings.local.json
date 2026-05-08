@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"E:\\\\PROJECTS\\\\AI PROJECTS\\\\ER_PLAN\\\\frontend\" && cat package.json | grep -i tailwind)",
+      "Bash(cd \"E:\\\\PROJECTS\\\\AI PROJECTS\\\\ER_PLAN\\\\backend\" && grep \"Django\" requirements.txt)"
+    ]
+  }
+}
