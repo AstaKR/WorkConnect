@@ -15,9 +15,16 @@ interface Task {
   action_plan?: string;
 }
 
+type TaskUpdate =
+  | { field: 'job'; value: string }
+  | { field: 'priority'; value: 'High' | 'Medium' | 'Low' }
+  | { field: 'status'; value: string }
+  | { field: 'action_plan'; value: string }
+  | { field: 'place_of_work'; value: string };
+
 interface ExpandedTaskItemProps {
   task: Task;
-  onUpdate: (id: number, field: string, value: any) => void;
+  onUpdate: (id: number, update: TaskUpdate) => void;
   onRemove: (id: number) => void;
 }
 
@@ -54,7 +61,7 @@ export default function ExpandedTaskItem({
           <input
             type="text"
             value={task.job}
-            onChange={(e) => onUpdate(task.id, 'job', e.target.value)}
+            onChange={(e) => onUpdate(task.id, { field: 'job', value: e.target.value })}
             placeholder="Task description"
             className="w-full text-sm border-gray-200 border rounded-lg p-2 focus:ring-primary focus:border-primary"
           />
@@ -62,7 +69,7 @@ export default function ExpandedTaskItem({
         <div className="col-span-12 md:col-span-3">
           <select
             value={task.priority}
-            onChange={(e) => onUpdate(task.id, 'priority', e.target.value as 'High' | 'Medium' | 'Low')}
+            onChange={(e) => onUpdate(task.id, { field: 'priority', value: e.target.value as 'High' | 'Medium' | 'Low' })}
             className="w-full text-sm border-gray-200 border rounded-lg p-2 focus:ring-primary focus:border-primary"
           >
             <option value="High">High Priority</option>
@@ -70,10 +77,10 @@ export default function ExpandedTaskItem({
             <option value="Low">Low Priority</option>
           </select>
         </div>
-        <div className="col-span-12 md:col-span-3">
+        <div className="col-span-12 md:col-span-2">
           <select
             value={task.status}
-            onChange={(e) => onUpdate(task.id, 'status', e.target.value)}
+            onChange={(e) => onUpdate(task.id, { field: 'status', value: e.target.value })}
             className="w-full text-sm border-gray-200 border rounded-lg p-2 focus:ring-primary focus:border-primary"
           >
             <option value="Pending">Pending</option>
@@ -81,7 +88,20 @@ export default function ExpandedTaskItem({
             <option value="Completed">Completed</option>
           </select>
         </div>
-        <div className="col-span-12 md:col-span-2 flex justify-end">
+        <div className="col-span-12 md:col-span-2">
+          <select
+            value={task.place_of_work || ''}
+            onChange={(e) => onUpdate(task.id, { field: 'place_of_work', value: e.target.value })}
+            className="w-full text-sm border-gray-200 border rounded-lg p-2 focus:ring-primary focus:border-primary"
+          >
+            <option value="">Select location</option>
+            <option value="Corporate Office">Corporate Office</option>
+            <option value="Work From Home">Work From Home</option>
+            <option value="Field Work">Field Work</option>
+            <option value="On Leave">On Leave</option>
+          </select>
+        </div>
+        <div className="col-span-12 md:col-span-1 flex justify-end">
           <button
             type="button"
             data-testid="delete-button"
@@ -94,7 +114,7 @@ export default function ExpandedTaskItem({
         <div className="col-span-12 relative">
           <textarea
             value={task.action_plan || ''}
-            onChange={(e) => onUpdate(task.id, 'action_plan', e.target.value)}
+            onChange={(e) => onUpdate(task.id, { field: 'action_plan', value: e.target.value })}
             placeholder="Action plan / notes..."
             rows={1}
             className="w-full text-sm border-gray-200 border rounded-lg p-2 pr-10 focus:ring-primary focus:border-primary"
