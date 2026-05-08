@@ -8,6 +8,7 @@ import {
 import api from '../api/axios';
 import { useAuthStore } from '../store/useAuthStore';
 import { applyTheme } from '../utils/theme';
+import { DISPLAY_VERSION, RELEASE_DATE } from '../constants';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Prefs {
@@ -559,11 +560,11 @@ export default function AppearanceSettings() {
           <div className="space-y-4">
             <div>
               <p className="text-sm text-gray-600">WorkConnect Version</p>
-              <p className="text-lg font-semibold text-gray-900">v1.1.0</p>
+              <p className="text-lg font-semibold text-gray-900">v{DISPLAY_VERSION}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Release Date</p>
-              <p className="text-sm text-gray-900">May 2026</p>
+              <p className="text-sm text-gray-900">{RELEASE_DATE}</p>
             </div>
           </div>
         </motion.div>
