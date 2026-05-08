@@ -130,8 +130,8 @@ npm test
 
 ## License
 
-[Add License Info]
+MIT License - See LICENSE file for details
 
 ## Support
 
-For issues or questions, please contact: [support email]
+For issues or questions, please contact: astakr108@gmail.com
