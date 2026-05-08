@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
-import { Save, Send, Plus, Trash2, GripVertical, AlertCircle, Wand2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Save, Send, Plus, AlertCircle } from 'lucide-react';
 import axios from '../api/axios';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -17,86 +17,25 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
-import AIAssistButton from '../components/AIAssistButton';
+import ExpandedTaskItem from '../components/ExpandedTaskItem';
+import MinimizedTaskItem from '../components/MinimizedTaskItem';
 
 interface Task {
   id: number;
   job: string;
-  priority: string;
+  priority: 'High' | 'Medium' | 'Low';
   status: string;
   action_plan?: string;
   order: number;
   place_of_work?: string;
 }
 
-const SortableTaskItem = ({ task, onRemove, onUpdate }: any) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: task.id });
-  const style = { transform: CSS.Transform.toString(transform), transition };
-
-  return (
-    <div ref={setNodeRef} style={style} className="flex items-start gap-3 p-4 bg-white border border-gray-100 rounded-xl shadow-sm mb-3">
-      <div {...attributes} {...listeners} className="mt-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
-        <GripVertical className="w-5 h-5" />
-      </div>
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-4">
-        <div className="col-span-12 md:col-span-4">
-          <input
-            type="text"
-            value={task.job}
-            onChange={(e) => onUpdate(task.id, 'job', e.target.value)}
-            placeholder="Task description"
-            className="w-full text-sm border-gray-200 border rounded-lg p-2 focus:ring-primary focus:border-primary"
-          />
-        </div>
-        <div className="col-span-12 md:col-span-3">
-          <select
-            value={task.priority}
-            onChange={(e) => onUpdate(task.id, 'priority', e.target.value)}
-            className="w-full text-sm border-gray-200 border rounded-lg p-2 focus:ring-primary focus:border-primary"
-          >
-            <option value="High">High Priority</option>
-            <option value="Medium">Medium Priority</option>
-            <option value="Low">Low Priority</option>
-          </select>
-        </div>
-        <div className="col-span-12 md:col-span-3">
-          <select
-            value={task.status}
-            onChange={(e) => onUpdate(task.id, 'status', e.target.value)}
-            className="w-full text-sm border-gray-200 border rounded-lg p-2 focus:ring-primary focus:border-primary"
-          >
-            <option value="Pending">Pending</option>
-            <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
-          </select>
-        </div>
-        <div className="col-span-12 md:col-span-2 flex justify-end">
-          <button type="button" onClick={() => onRemove(task.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-            <Trash2 className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="col-span-12 relative">
-          <textarea
-            value={task.action_plan || ''}
-            onChange={(e) => onUpdate(task.id, 'action_plan', e.target.value)}
-            placeholder="Action plan / notes"
-            rows={1}
-            className="w-full text-sm border-gray-200 border rounded-lg p-2 pr-10 focus:ring-primary focus:border-primary"
-          />
-          <AIAssistButton task={task.job} onResult={(plan) => onUpdate(task.id, 'action_plan', plan)} />
-        </div>
-      </div>
-    </div>
-  );
-};
-
 export default function NewReport() {
   const [report, setReport] = useState<any>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [focusedTaskId, setFocusedTaskId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -115,6 +54,10 @@ export default function NewReport() {
         const data = res.data.data;
         setReport(data);
         setTasks(data.tasks || []);
+        // Auto-focus first task on load
+        if (data.tasks && data.tasks.length > 0) {
+          setFocusedTaskId(data.tasks[0].id);
+        }
         setValue('place_of_work', data.place_of_work);
         setValue('notes', data.notes);
       } catch (err) {
@@ -140,23 +83,51 @@ export default function NewReport() {
   };
 
   const handleAddTask = () => {
+    const newTaskId = Date.now();
     const newTask: Task = {
-      id: Date.now(), // Temporary ID until saved
+      id: newTaskId,
       job: '',
       priority: 'Medium',
       status: 'Pending',
-      order: tasks.length, // always at the end
+      order: tasks.length,
       place_of_work: report?.place_of_work || 'Corporate Office',
     };
-    setTasks(prev => [...prev, newTask]); // append at bottom
+    setTasks((prev) => [...prev, newTask]);
+    // Auto-focus new task
+    setFocusedTaskId(newTaskId);
   };
 
-  const handleUpdateTask = (id: number, field: string, value: any) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, [field]: value } : t));
+  const handleUpdateTask = (id: number, update: any) => {
+    // Handle both the discriminated union format from ExpandedTaskItem
+    // and any generic update object
+    const updateObj = update.field
+      ? { [update.field]: update.value }
+      : update;
+    setTasks(tasks.map((t) => (t.id === id ? { ...t, ...updateObj } : t)));
   };
 
   const handleRemoveTask = (id: number) => {
-    setTasks(tasks.filter(t => t.id !== id));
+    setTasks(tasks.filter((t) => t.id !== id));
+    // If removed task was focused, focus next or previous
+    if (focusedTaskId === id) {
+      const remainingTasks = tasks.filter((t) => t.id !== id);
+      if (remainingTasks.length > 0) {
+        setFocusedTaskId(remainingTasks[0].id);
+      } else {
+        setFocusedTaskId(null);
+      }
+    }
+  };
+
+  const handleTaskFocus = (taskId: number) => {
+    setFocusedTaskId(taskId);
+  };
+
+  const handleClickOutside = (e: React.MouseEvent) => {
+    // Only unfocus if clicking on the background, not on task items
+    if (e.target === e.currentTarget) {
+      setFocusedTaskId(null);
+    }
   };
 
   const saveReport = async (data: any, submit = false) => {
@@ -243,15 +214,39 @@ export default function NewReport() {
           </button>
         </div>
 
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-            <div className="space-y-2">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={tasks.map((t) => t.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-2" onClick={handleClickOutside}>
               {tasks.length === 0 ? (
-                <p className="text-center text-gray-500 py-8">No tasks added yet. Click 'Add Task' to begin.</p>
+                <p className="text-center text-gray-500 py-8">
+                  No tasks added yet. Click 'Add Task' to begin.
+                </p>
               ) : (
-                tasks.map(task => (
-                  <SortableTaskItem key={task.id} task={task} onRemove={handleRemoveTask} onUpdate={handleUpdateTask} />
-                ))
+                <AnimatePresence mode="popLayout">
+                  {tasks.map((task) =>
+                    focusedTaskId === task.id ? (
+                      <ExpandedTaskItem
+                        key={task.id}
+                        task={task}
+                        onUpdate={handleUpdateTask}
+                        onRemove={handleRemoveTask}
+                      />
+                    ) : (
+                      <MinimizedTaskItem
+                        key={task.id}
+                        task={task}
+                        onClick={handleTaskFocus}
+                      />
+                    )
+                  )}
+                </AnimatePresence>
               )}
             </div>
           </SortableContext>
