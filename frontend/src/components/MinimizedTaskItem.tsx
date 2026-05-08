@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react';
 interface Task {
   id: number;
   job: string;
-  priority: string;
+  priority: 'High' | 'Medium' | 'Low';
   status: string;
   order: number;
   place_of_work?: string;

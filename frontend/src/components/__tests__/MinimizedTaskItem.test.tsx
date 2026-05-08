@@ -1,7 +1,20 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import MinimizedTaskItem from '../MinimizedTaskItem';
-import { motion } from 'framer-motion';
+
+// Mock framer-motion to avoid animation issues in jsdom
+vi.mock('framer-motion', () => {
+  const React = require('react');
+  return {
+    motion: new Proxy({}, {
+      get: (_: unknown, tag: string) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return ({ children, ...props }: any) => React.createElement(tag, props, children);
+      },
+    }),
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children),
+  };
+});
 
 describe('MinimizedTaskItem', () => {
   const mockTask = {
