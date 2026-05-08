@@ -1,4 +1,4 @@
-import { GITHUB_URL } from '../../constants';
+import { GITHUB_URL, DISPLAY_VERSION } from '../../constants';
 
 const FOOTER_COLS = [
   { heading: 'Product', links: ['Features', 'AI Assistant', 'Roles & Approvals', 'Changelog'] },
@@ -56,7 +56,7 @@ export default function LandingFooter() {
             <p className="text-[12px] text-slate-800">
               © 2026 WorkConnect. Open source under MIT License.
             </p>
-            <p className="text-[11px] text-slate-700 mt-1">v1.1.0</p>
+            <p className="text-[11px] text-slate-700 mt-1">v{DISPLAY_VERSION}</p>
           </div>
           <div className="flex gap-2">
             {BADGES.map(b => (
